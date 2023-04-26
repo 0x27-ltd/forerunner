@@ -2,9 +2,9 @@
 pragma solidity ^0.8.9;
 
 import {DSTest} from "ds-test/test.sol";
-import {Button} from "../Button.sol";
-import {MockSafe} from "../MockSafe.sol";
-import {MyModule} from "../MyModule.sol";
+import {Button} from "../src/Button.sol";
+import {MockSafe} from "../src/MockSafe.sol";
+import {MyModule} from "../src/MyModule.sol";
 
 contract ContractTest is DSTest {
     Button button;
