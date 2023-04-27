@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import {DSTest} from "ds-test/test.sol";
+import {Test} from "../lib/forge-std/src/Test.sol";
 import {Button} from "../src/Button.sol";
 import {MockSafe} from "../src/MockSafe.sol";
 import {MyModule} from "../src/MyModule.sol";
