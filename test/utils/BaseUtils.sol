@@ -5,7 +5,7 @@ import {Test, console, Vm} from "forge-std/Test.sol";
 
 import "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-contract BaseHelper is Test {
+contract BaseUtils is Test {
     // Api to modify test vm state.
     Vm internal constant FORGE_VM = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
