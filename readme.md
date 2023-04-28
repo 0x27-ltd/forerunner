@@ -1,4 +1,4 @@
-# Forge Deployment Notes
+# Forge Deployment Script Notes
 
 ### Deploy to Anvil localhost
 * create deploy script like FundModule.s.sol (not no private key needed for the vm.broadcast/vm.startBroadcast bit)
@@ -16,3 +16,8 @@
 
 ### Example of full deployment and verification with verbose output
 forge script script/MyToken.s.sol:MyScript --rpc-url $RINKEBY_RPC_URL  --private-key $PRIVATE_KEY --broadcast --verify --etherscan-api-key $ETHERSCAN_KEY -vvvv
+
+# Useful Resources
+* https://github.com/dabit3/foundry-cheatsheet
+* https://github.com/crisgarner/awesome-foundry
+* nice tutorial: https://jamesbachini.com/foundry-tutorial/
