@@ -95,58 +95,58 @@ contract ModuleTest is BaseHelper {
         vm.prank(investor);
         fundModule.withdraw(sharesWithdrawn);
         vm.warp(block.timestamp + 40 days);
-        assertEq(fundModule.totalAssets(), 0);
-        assertEq(fundModule.sharePrice(), 1 ether);
+        assertEq(fundModule.getFundState().totalAssets, 0);
+        assertEq(fundModule.getFundState().sharePrice, 1 ether);
         vm.prank(accountant);
         fundModule.baseAssetValuation();
         whitelistAndInvest(investor, toWei(9, decimals));
-        assertEq(fundModule.totalAssets(), toWei(9, 18));
-        assertEq(fundModule.sharePrice(), 1 ether);
+        assertEq(fundModule.getFundState().totalAssets, toWei(9, 18));
+        assertEq(fundModule.getFundState().sharePrice, 1 ether);
     }
 
     function test_customValuation() public {
         uint256 investAmount = toWei(1, decimals);
         whitelistAndInvest(investor, investAmount);
         //simulating some return that would require repricing
-        uint256 newNav = fundModule.totalAssets() * 2;
+        uint256 newNav = fundModule.getFundState().totalAssets * 2;
         // modifyBalance(address(mockUsdc), address(safe), newNav);
         vm.prank(accountant);
         fundModule.customValuation(newNav);
-        assertEq(fundModule.totalAssets(), newNav);
-        assertEq(fundModule.sharePrice(), 2 ether);
+        assertEq(fundModule.getFundState().totalAssets, newNav);
+        assertEq(fundModule.getFundState().sharePrice, 2 ether);
     }
 
-    //@audit something wrong here
+    // //@audit something wrong here
     function test_baseAssetValuation() public {
         uint256 investAmount = toWei(1, decimals);
         whitelistAndInvest(investor, investAmount);
         //simulating some return that would require repricing
-        uint256 newNav = fundModule.totalAssets() * 2;
+        uint256 newNav = fundModule.getFundState().totalAssets * 2;
         modifyBalance(address(mockUsdc), address(safe), investAmount * 2);
         vm.prank(accountant);
         fundModule.baseAssetValuation();
-        assertEq(fundModule.totalAssets(), newNav);
-        assertEq(fundModule.sharePrice(), 2 ether);
+        assertEq(fundModule.getFundState().totalAssets, newNav);
+        assertEq(fundModule.getFundState().sharePrice, 2 ether);
     }
 
     function test_baseAssetValuationAtZero() public {
-        assertEq(fundModule.lastValuationTime(), 1);
+        assertEq(fundModule.getFundState().lastValuationTime, 1);
         vm.warp(block.timestamp + 40 days);
         vm.prank(accountant);
         fundModule.baseAssetValuation();
-        assertEq(fundModule.lastValuationTime(), 1 + 40 days);
-        assertEq(fundModule.totalAssets(), 0);
-        assertEq(fundModule.sharePrice(), 1 ether);
+        assertEq(fundModule.getFundState().lastValuationTime, 1 + 40 days);
+        assertEq(fundModule.getFundState().totalAssets, 0);
+        assertEq(fundModule.getFundState().sharePrice, 1 ether);
     }
 
     function test_customValuationAtZero() public {
-        assertEq(fundModule.lastValuationTime(), 1);
+        assertEq(fundModule.getFundState().lastValuationTime, 1);
         vm.warp(block.timestamp + 40 days);
         vm.prank(accountant);
         fundModule.customValuation(0);
-        assertEq(fundModule.lastValuationTime(), 1 + 40 days);
-        assertEq(fundModule.totalAssets(), 0);
-        assertEq(fundModule.sharePrice(), 1 ether);
+        assertEq(fundModule.getFundState().lastValuationTime, 1 + 40 days);
+        assertEq(fundModule.getFundState().totalAssets, 0);
+        assertEq(fundModule.getFundState().sharePrice, 1 ether);
     }
 
     function test_changeBaseAsset() public {
@@ -172,17 +172,17 @@ contract ModuleTest is BaseHelper {
         uint256 investAmount = toWei(100, decimals);
         whitelistAndInvest(investor, investAmount);
         valueAndReprice(changeWei(investAmount, 6, 18) * 1.1 ether / 1 ether);
-        assertEq(fundModule.totalAssets(), toWei(110, 18));
-        assertEq(fundModule.sharePrice(), toWei(11, 17));
+        assertEq(fundModule.getFundState().totalAssets, toWei(110, 18));
+        assertEq(fundModule.getFundState().sharePrice, toWei(11, 17));
         assertEq(fundModule.balanceOf(investor), toWei(100, 18));
         // day 2 invest more and reprice unprofitable day, withdraw half
         uint256 secondInvestAmount = toWei(10, decimals);
         whitelistAndInvest(investor, secondInvestAmount);
         assertEq(fundModule.totalSupply(), 109090909090909090909); //manually calculated with issuance formula
-        assertEq(fundModule.totalAssets(), toWei(120, 18));
-        valueAndReprice(fundModule.totalAssets() * 0.95 ether / 1 ether);
-        assertEq(fundModule.totalAssets(), 114 ether);
-        assertEq(fundModule.sharePrice(), 1.045 ether); //prev share price 1.1 * 0.95 = 1.045
+        assertEq(fundModule.getFundState().totalAssets, toWei(120, 18));
+        valueAndReprice(fundModule.getFundState().totalAssets * 0.95 ether / 1 ether);
+        assertEq(fundModule.getFundState().totalAssets, 114 ether);
+        assertEq(fundModule.getFundState().sharePrice, 1.045 ether); //prev share price 1.1 * 0.95 = 1.045
         uint256 investorShares = fundModule.balanceOf(investor);
         assertEq(investorShares, 109090909090909090909);
         // uint256 assetsBeforeWithdraw = fundModule.totalAssets();
@@ -194,23 +194,14 @@ contract ModuleTest is BaseHelper {
         assertEq(mockUsdc.balanceOf(address(safe)), (114 * 1e6 * 1 ether / 2 ether + 1)); //assetsBeforeWithdraw*1 ether/2 ether);
     }
 
-    // function test_fixedMath() public view {
-    //     // uint256 a = FixedPointMathLib.mulDivDown(x, y, denominator);
-    //     uint256 a = 109090909090909090909*toWei(1, 6)/1 ether;
-    //     uint256 b = FixedPointMathLib.mulWadDown(109090909090909090909, 1e6);
-    //     console.log(a);
-    //     console.log(b);
-    // }
-
-    //Things to double check -> ContextUpgradeable._msgSender() issue &Fix public variables
-
+    //Things to double check -> ContextUpgradeable._msgSender() issue
     //@todo
-    //fundSafe variable can likely be replaced with the module's target or avatar (constructor still needs it but storage unnecessary)
     //use FixedPointMath from solmate so make FundModule.sol more readable
-
     //Left off:
-    //Create new test file: FundModuleExtended and move the current test in there
-    //Change FundModule to have one owner - the manager as a prop fund (extended keeps the roles)
-
+    //have a final think about if there is reentrancy on Invest - I think i fixed withdraw reentrancy
+    //Change FundModule to have one owner - the manager as a prop fund (extended keeps the roles) - rethink this
     //* have a think of the conseq of the owner p-key being comprimised
+
+    //get tests working with diff decimals
+    //create helper contracts like whenInvested to get test duplication down, also think about how we can reuse test code on fundmodextended
 }
