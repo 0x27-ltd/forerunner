@@ -11,6 +11,7 @@ contract ERC20Decimal is ERC20 {
 
     constructor(string memory name_, string memory symbol_, uint8 decimals_) ERC20(name_, symbol_) {
         _decimals = decimals_;
+        _mint(msg.sender, 10000*10**decimals_);
     }
 
     function decimals() public view virtual override returns (uint8) {
