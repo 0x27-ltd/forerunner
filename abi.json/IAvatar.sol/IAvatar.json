@@ -1,0 +1,1600 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "module",
+          "type": "address"
+        }
+      ],
+      "name": "DisabledModule",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "module",
+          "type": "address"
+        }
+      ],
+      "name": "EnabledModule",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "module",
+          "type": "address"
+        }
+      ],
+      "name": "ExecutionFromModuleFailure",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "module",
+          "type": "address"
+        }
+      ],
+      "name": "ExecutionFromModuleSuccess",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "prevModule",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "module",
+          "type": "address"
+        }
+      ],
+      "name": "disableModule",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "module",
+          "type": "address"
+        }
+      ],
+      "name": "enableModule",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        },
+        {
+          "internalType": "enum Enum.Operation",
+          "name": "operation",
+          "type": "uint8"
+        }
+      ],
+      "name": "execTransactionFromModule",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "success",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        },
+        {
+          "internalType": "enum Enum.Operation",
+          "name": "operation",
+          "type": "uint8"
+        }
+      ],
+      "name": "execTransactionFromModuleReturnData",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "success",
+          "type": "bool"
+        },
+        {
+          "internalType": "bytes",
+          "name": "returnData",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "start",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "pageSize",
+          "type": "uint256"
+        }
+      ],
+      "name": "getModulesPaginated",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "array",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "next",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "module",
+          "type": "address"
+        }
+      ],
+      "name": "isModuleEnabled",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "disableModule(address,address)": "e009cfde",
+    "enableModule(address)": "610b5925",
+    "execTransactionFromModule(address,uint256,bytes,uint8)": "468721a7",
+    "execTransactionFromModuleReturnData(address,uint256,bytes,uint8)": "5229073f",
+    "getModulesPaginated(address,uint256)": "cc2f8452",
+    "isModuleEnabled(address)": "2d9ad53d"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.19+commit.7dd6d404\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"module\",\"type\":\"address\"}],\"name\":\"DisabledModule\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"module\",\"type\":\"address\"}],\"name\":\"EnabledModule\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"module\",\"type\":\"address\"}],\"name\":\"ExecutionFromModuleFailure\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"module\",\"type\":\"address\"}],\"name\":\"ExecutionFromModuleSuccess\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"prevModule\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"module\",\"type\":\"address\"}],\"name\":\"disableModule\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"module\",\"type\":\"address\"}],\"name\":\"enableModule\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"enum Enum.Operation\",\"name\":\"operation\",\"type\":\"uint8\"}],\"name\":\"execTransactionFromModule\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"enum Enum.Operation\",\"name\":\"operation\",\"type\":\"uint8\"}],\"name\":\"execTransactionFromModuleReturnData\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"returnData\",\"type\":\"bytes\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"start\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"pageSize\",\"type\":\"uint256\"}],\"name\":\"getModulesPaginated\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"array\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"next\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"module\",\"type\":\"address\"}],\"name\":\"isModuleEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"disableModule(address,address)\":{\"details\":\"Disables a module on the avatar.\",\"params\":{\"module\":\"Module to be removed.\",\"prevModule\":\"Address that pointed to the module to be removed in the linked list\"}},\"enableModule(address)\":{\"details\":\"Enables a module on the avatar.\",\"params\":{\"module\":\"Module to be enabled.\"}},\"execTransactionFromModule(address,uint256,bytes,uint8)\":{\"details\":\"Allows a Module to execute a transaction.\",\"params\":{\"data\":\"Data payload of module transaction.\",\"operation\":\"Operation type of module transaction: 0 == call, 1 == delegate call.\",\"to\":\"Destination address of module transaction.\",\"value\":\"Ether value of module transaction.\"}},\"execTransactionFromModuleReturnData(address,uint256,bytes,uint8)\":{\"details\":\"Allows a Module to execute a transaction and return data\",\"params\":{\"data\":\"Data payload of module transaction.\",\"operation\":\"Operation type of module transaction: 0 == call, 1 == delegate call.\",\"to\":\"Destination address of module transaction.\",\"value\":\"Ether value of module transaction.\"}},\"getModulesPaginated(address,uint256)\":{\"details\":\"Returns array of modules.\",\"params\":{\"pageSize\":\"Maximum number of modules that should be returned.\",\"start\":\"Start of the page.\"},\"returns\":{\"array\":\"Array of modules.\",\"next\":\"Start of the next page.\"}},\"isModuleEnabled(address)\":{\"details\":\"Returns if an module is enabled\",\"returns\":{\"_0\":\"True if the module is enabled\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"disableModule(address,address)\":{\"notice\":\"Can only be called by the avatar.Must emit DisabledModule(address module) if successful.\"},\"enableModule(address)\":{\"notice\":\"Can only be called by the avatar.Modules should be stored as a linked list.Must emit EnabledModule(address module) if successful.\"},\"execTransactionFromModule(address,uint256,bytes,uint8)\":{\"notice\":\"Can only be called by an enabled module.Must emit ExecutionFromModuleSuccess(address module) if successful.Must emit ExecutionFromModuleFailure(address module) if unsuccessful.\"},\"execTransactionFromModuleReturnData(address,uint256,bytes,uint8)\":{\"notice\":\"Can only be called by an enabled module.Must emit ExecutionFromModuleSuccess(address module) if successful.Must emit ExecutionFromModuleFailure(address module) if unsuccessful.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"lib/zodiac/contracts/interfaces/IAvatar.sol\":\"IAvatar\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@gnosis.pm/safe-contracts/=lib/safe-contracts/\",\":@gnosis.pm/zodiac/=lib/zodiac/\",\":@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\",\":ds-test/=lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":safe-contracts/=lib/safe-contracts/contracts/\",\":solmate/=lib/solmate/src/\",\":zodiac/=lib/zodiac/contracts/\"]},\"sources\":{\"lib/safe-contracts/contracts/common/Enum.sol\":{\"keccak256\":\"0x473e45b1a5cc47be494b0e123c9127f0c11c1e0992a321ae5a644c0bfdb2c14f\",\"license\":\"LGPL-3.0-only\",\"urls\":[\"bzz-raw://948e6d5a8bd7377f7795b6e28584eab9be5c0a8db240bf5e606744a175238c3d\",\"dweb:/ipfs/QmQQaUmQfpuejV41jbxKSTgEBYYCcVTjCsDMgf2htgz6ej\"]},\"lib/zodiac/contracts/interfaces/IAvatar.sol\":{\"keccak256\":\"0xcd5508ffe596eef8fbccfd5fc4f10a34397773547ce64e212d48b5212865ec1f\",\"license\":\"LGPL-3.0-only\",\"urls\":[\"bzz-raw://1655ba8b760132ebd702cc806fcdad50a44d320fbeca14be00e35b0171bd35cf\",\"dweb:/ipfs/QmcbB5HpCoEQCTHKWxHS3HpFmgaB4AcZxZYtvQk2QEyvN2\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.19+commit.7dd6d404"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "module",
+              "type": "address",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "DisabledModule",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "module",
+              "type": "address",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "EnabledModule",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "module",
+              "type": "address",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "ExecutionFromModuleFailure",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "module",
+              "type": "address",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "ExecutionFromModuleSuccess",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "prevModule",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "module",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "disableModule"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "module",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "enableModule"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum Enum.Operation",
+              "name": "operation",
+              "type": "uint8"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "execTransactionFromModule",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "success",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum Enum.Operation",
+              "name": "operation",
+              "type": "uint8"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "execTransactionFromModuleReturnData",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "success",
+              "type": "bool"
+            },
+            {
+              "internalType": "bytes",
+              "name": "returnData",
+              "type": "bytes"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "start",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "pageSize",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getModulesPaginated",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "array",
+              "type": "address[]"
+            },
+            {
+              "internalType": "address",
+              "name": "next",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "module",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isModuleEnabled",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "disableModule(address,address)": {
+            "details": "Disables a module on the avatar.",
+            "params": {
+              "module": "Module to be removed.",
+              "prevModule": "Address that pointed to the module to be removed in the linked list"
+            }
+          },
+          "enableModule(address)": {
+            "details": "Enables a module on the avatar.",
+            "params": {
+              "module": "Module to be enabled."
+            }
+          },
+          "execTransactionFromModule(address,uint256,bytes,uint8)": {
+            "details": "Allows a Module to execute a transaction.",
+            "params": {
+              "data": "Data payload of module transaction.",
+              "operation": "Operation type of module transaction: 0 == call, 1 == delegate call.",
+              "to": "Destination address of module transaction.",
+              "value": "Ether value of module transaction."
+            }
+          },
+          "execTransactionFromModuleReturnData(address,uint256,bytes,uint8)": {
+            "details": "Allows a Module to execute a transaction and return data",
+            "params": {
+              "data": "Data payload of module transaction.",
+              "operation": "Operation type of module transaction: 0 == call, 1 == delegate call.",
+              "to": "Destination address of module transaction.",
+              "value": "Ether value of module transaction."
+            }
+          },
+          "getModulesPaginated(address,uint256)": {
+            "details": "Returns array of modules.",
+            "params": {
+              "pageSize": "Maximum number of modules that should be returned.",
+              "start": "Start of the page."
+            },
+            "returns": {
+              "array": "Array of modules.",
+              "next": "Start of the next page."
+            }
+          },
+          "isModuleEnabled(address)": {
+            "details": "Returns if an module is enabled",
+            "returns": {
+              "_0": "True if the module is enabled"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "disableModule(address,address)": {
+            "notice": "Can only be called by the avatar.Must emit DisabledModule(address module) if successful."
+          },
+          "enableModule(address)": {
+            "notice": "Can only be called by the avatar.Modules should be stored as a linked list.Must emit EnabledModule(address module) if successful."
+          },
+          "execTransactionFromModule(address,uint256,bytes,uint8)": {
+            "notice": "Can only be called by an enabled module.Must emit ExecutionFromModuleSuccess(address module) if successful.Must emit ExecutionFromModuleFailure(address module) if unsuccessful."
+          },
+          "execTransactionFromModuleReturnData(address,uint256,bytes,uint8)": {
+            "notice": "Can only be called by an enabled module.Must emit ExecutionFromModuleSuccess(address module) if successful.Must emit ExecutionFromModuleFailure(address module) if unsuccessful."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@gnosis.pm/safe-contracts/=lib/safe-contracts/",
+        ":@gnosis.pm/zodiac/=lib/zodiac/",
+        ":@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        ":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+        ":ds-test/=lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":safe-contracts/=lib/safe-contracts/contracts/",
+        ":solmate/=lib/solmate/src/",
+        ":zodiac/=lib/zodiac/contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "lib/zodiac/contracts/interfaces/IAvatar.sol": "IAvatar"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/safe-contracts/contracts/common/Enum.sol": {
+        "keccak256": "0x473e45b1a5cc47be494b0e123c9127f0c11c1e0992a321ae5a644c0bfdb2c14f",
+        "urls": [
+          "bzz-raw://948e6d5a8bd7377f7795b6e28584eab9be5c0a8db240bf5e606744a175238c3d",
+          "dweb:/ipfs/QmQQaUmQfpuejV41jbxKSTgEBYYCcVTjCsDMgf2htgz6ej"
+        ],
+        "license": "LGPL-3.0-only"
+      },
+      "lib/zodiac/contracts/interfaces/IAvatar.sol": {
+        "keccak256": "0xcd5508ffe596eef8fbccfd5fc4f10a34397773547ce64e212d48b5212865ec1f",
+        "urls": [
+          "bzz-raw://1655ba8b760132ebd702cc806fcdad50a44d320fbeca14be00e35b0171bd35cf",
+          "dweb:/ipfs/QmcbB5HpCoEQCTHKWxHS3HpFmgaB4AcZxZYtvQk2QEyvN2"
+        ],
+        "license": "LGPL-3.0-only"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "lib/zodiac/contracts/interfaces/IAvatar.sol",
+    "id": 30868,
+    "exportedSymbols": {
+      "Enum": [
+        30368
+      ],
+      "IAvatar": [
+        30867
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "151:3100:32",
+    "nodes": [
+      {
+        "id": 30782,
+        "nodeType": "PragmaDirective",
+        "src": "151:31:32",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          ">=",
+          "0.7",
+          ".0",
+          "<",
+          "0.9",
+          ".0"
+        ]
+      },
+      {
+        "id": 30783,
+        "nodeType": "ImportDirective",
+        "src": "184:61:32",
+        "nodes": [],
+        "absolutePath": "lib/safe-contracts/contracts/common/Enum.sol",
+        "file": "@gnosis.pm/safe-contracts/contracts/common/Enum.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 30868,
+        "sourceUnit": 30369,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 30867,
+        "nodeType": "ContractDefinition",
+        "src": "247:3003:32",
+        "nodes": [
+          {
+            "id": 30787,
+            "nodeType": "EventDefinition",
+            "src": "271:36:32",
+            "nodes": [],
+            "anonymous": false,
+            "eventSelector": "ecdf3a3effea5783a3c4c2140e677577666428d44ed9d474a0b3a4c9943f8440",
+            "name": "EnabledModule",
+            "nameLocation": "277:13:32",
+            "parameters": {
+              "id": 30786,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30785,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "module",
+                  "nameLocation": "299:6:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30787,
+                  "src": "291:14:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 30784,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "291:7:32",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "290:16:32"
+            }
+          },
+          {
+            "id": 30791,
+            "nodeType": "EventDefinition",
+            "src": "312:37:32",
+            "nodes": [],
+            "anonymous": false,
+            "eventSelector": "aab4fa2b463f581b2b32cb3b7e3b704b9ce37cc209b5fb4d77e593ace4054276",
+            "name": "DisabledModule",
+            "nameLocation": "318:14:32",
+            "parameters": {
+              "id": 30790,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30789,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "module",
+                  "nameLocation": "341:6:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30791,
+                  "src": "333:14:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 30788,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "333:7:32",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "332:16:32"
+            }
+          },
+          {
+            "id": 30795,
+            "nodeType": "EventDefinition",
+            "src": "354:57:32",
+            "nodes": [],
+            "anonymous": false,
+            "eventSelector": "6895c13664aa4f67288b25d7a21d7aaa34916e355fb9b6fae0a139a9085becb8",
+            "name": "ExecutionFromModuleSuccess",
+            "nameLocation": "360:26:32",
+            "parameters": {
+              "id": 30794,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30793,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "module",
+                  "nameLocation": "403:6:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30795,
+                  "src": "387:22:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 30792,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "387:7:32",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "386:24:32"
+            }
+          },
+          {
+            "id": 30799,
+            "nodeType": "EventDefinition",
+            "src": "416:57:32",
+            "nodes": [],
+            "anonymous": false,
+            "eventSelector": "acd2c8702804128fdb0db2bb49f6d127dd0181c13fd45dbfe16de0930e2bd375",
+            "name": "ExecutionFromModuleFailure",
+            "nameLocation": "422:26:32",
+            "parameters": {
+              "id": 30798,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30797,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "module",
+                  "nameLocation": "465:6:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30799,
+                  "src": "449:22:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 30796,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "449:7:32",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "448:24:32"
+            }
+          },
+          {
+            "id": 30805,
+            "nodeType": "FunctionDefinition",
+            "src": "748:47:32",
+            "nodes": [],
+            "documentation": {
+              "id": 30800,
+              "nodeType": "StructuredDocumentation",
+              "src": "479:264:32",
+              "text": "@dev Enables a module on the avatar.\n @notice Can only be called by the avatar.\n @notice Modules should be stored as a linked list.\n @notice Must emit EnabledModule(address module) if successful.\n @param module Module to be enabled."
+            },
+            "functionSelector": "610b5925",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "enableModule",
+            "nameLocation": "757:12:32",
+            "parameters": {
+              "id": 30803,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30802,
+                  "mutability": "mutable",
+                  "name": "module",
+                  "nameLocation": "778:6:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30805,
+                  "src": "770:14:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 30801,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "770:7:32",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "769:16:32"
+            },
+            "returnParameters": {
+              "id": 30804,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "794:0:32"
+            },
+            "scope": 30867,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 30813,
+            "nodeType": "FunctionDefinition",
+            "src": "1107:68:32",
+            "nodes": [],
+            "documentation": {
+              "id": 30806,
+              "nodeType": "StructuredDocumentation",
+              "src": "801:301:32",
+              "text": "@dev Disables a module on the avatar.\n @notice Can only be called by the avatar.\n @notice Must emit DisabledModule(address module) if successful.\n @param prevModule Address that pointed to the module to be removed in the linked list\n @param module Module to be removed."
+            },
+            "functionSelector": "e009cfde",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "disableModule",
+            "nameLocation": "1116:13:32",
+            "parameters": {
+              "id": 30811,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30808,
+                  "mutability": "mutable",
+                  "name": "prevModule",
+                  "nameLocation": "1138:10:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30813,
+                  "src": "1130:18:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 30807,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1130:7:32",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 30810,
+                  "mutability": "mutable",
+                  "name": "module",
+                  "nameLocation": "1158:6:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30813,
+                  "src": "1150:14:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 30809,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1150:7:32",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1129:36:32"
+            },
+            "returnParameters": {
+              "id": 30812,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1174:0:32"
+            },
+            "scope": 30867,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 30828,
+            "nodeType": "FunctionDefinition",
+            "src": "1730:177:32",
+            "nodes": [],
+            "documentation": {
+              "id": 30814,
+              "nodeType": "StructuredDocumentation",
+              "src": "1181:544:32",
+              "text": "@dev Allows a Module to execute a transaction.\n @notice Can only be called by an enabled module.\n @notice Must emit ExecutionFromModuleSuccess(address module) if successful.\n @notice Must emit ExecutionFromModuleFailure(address module) if unsuccessful.\n @param to Destination address of module transaction.\n @param value Ether value of module transaction.\n @param data Data payload of module transaction.\n @param operation Operation type of module transaction: 0 == call, 1 == delegate call."
+            },
+            "functionSelector": "468721a7",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "execTransactionFromModule",
+            "nameLocation": "1739:25:32",
+            "parameters": {
+              "id": 30824,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30816,
+                  "mutability": "mutable",
+                  "name": "to",
+                  "nameLocation": "1782:2:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30828,
+                  "src": "1774:10:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 30815,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1774:7:32",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 30818,
+                  "mutability": "mutable",
+                  "name": "value",
+                  "nameLocation": "1802:5:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30828,
+                  "src": "1794:13:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 30817,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1794:7:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 30820,
+                  "mutability": "mutable",
+                  "name": "data",
+                  "nameLocation": "1830:4:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30828,
+                  "src": "1817:17:32",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 30819,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1817:5:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 30823,
+                  "mutability": "mutable",
+                  "name": "operation",
+                  "nameLocation": "1859:9:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30828,
+                  "src": "1844:24:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_Operation_$30367",
+                    "typeString": "enum Enum.Operation"
+                  },
+                  "typeName": {
+                    "id": 30822,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 30821,
+                      "name": "Enum.Operation",
+                      "nameLocations": [
+                        "1844:4:32",
+                        "1849:9:32"
+                      ],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 30367,
+                      "src": "1844:14:32"
+                    },
+                    "referencedDeclaration": 30367,
+                    "src": "1844:14:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_enum$_Operation_$30367",
+                      "typeString": "enum Enum.Operation"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1764:110:32"
+            },
+            "returnParameters": {
+              "id": 30827,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30826,
+                  "mutability": "mutable",
+                  "name": "success",
+                  "nameLocation": "1898:7:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30828,
+                  "src": "1893:12:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 30825,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1893:4:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1892:14:32"
+            },
+            "scope": 30867,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 30845,
+            "nodeType": "FunctionDefinition",
+            "src": "2477:212:32",
+            "nodes": [],
+            "documentation": {
+              "id": 30829,
+              "nodeType": "StructuredDocumentation",
+              "src": "1913:559:32",
+              "text": "@dev Allows a Module to execute a transaction and return data\n @notice Can only be called by an enabled module.\n @notice Must emit ExecutionFromModuleSuccess(address module) if successful.\n @notice Must emit ExecutionFromModuleFailure(address module) if unsuccessful.\n @param to Destination address of module transaction.\n @param value Ether value of module transaction.\n @param data Data payload of module transaction.\n @param operation Operation type of module transaction: 0 == call, 1 == delegate call."
+            },
+            "functionSelector": "5229073f",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "execTransactionFromModuleReturnData",
+            "nameLocation": "2486:35:32",
+            "parameters": {
+              "id": 30839,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30831,
+                  "mutability": "mutable",
+                  "name": "to",
+                  "nameLocation": "2539:2:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30845,
+                  "src": "2531:10:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 30830,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2531:7:32",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 30833,
+                  "mutability": "mutable",
+                  "name": "value",
+                  "nameLocation": "2559:5:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30845,
+                  "src": "2551:13:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 30832,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2551:7:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 30835,
+                  "mutability": "mutable",
+                  "name": "data",
+                  "nameLocation": "2587:4:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30845,
+                  "src": "2574:17:32",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 30834,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2574:5:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 30838,
+                  "mutability": "mutable",
+                  "name": "operation",
+                  "nameLocation": "2616:9:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30845,
+                  "src": "2601:24:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_Operation_$30367",
+                    "typeString": "enum Enum.Operation"
+                  },
+                  "typeName": {
+                    "id": 30837,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 30836,
+                      "name": "Enum.Operation",
+                      "nameLocations": [
+                        "2601:4:32",
+                        "2606:9:32"
+                      ],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 30367,
+                      "src": "2601:14:32"
+                    },
+                    "referencedDeclaration": 30367,
+                    "src": "2601:14:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_enum$_Operation_$30367",
+                      "typeString": "enum Enum.Operation"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2521:110:32"
+            },
+            "returnParameters": {
+              "id": 30844,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30841,
+                  "mutability": "mutable",
+                  "name": "success",
+                  "nameLocation": "2655:7:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30845,
+                  "src": "2650:12:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 30840,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2650:4:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 30843,
+                  "mutability": "mutable",
+                  "name": "returnData",
+                  "nameLocation": "2677:10:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30845,
+                  "src": "2664:23:32",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 30842,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2664:5:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2649:39:32"
+            },
+            "scope": 30867,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 30853,
+            "nodeType": "FunctionDefinition",
+            "src": "2786:70:32",
+            "nodes": [],
+            "documentation": {
+              "id": 30846,
+              "nodeType": "StructuredDocumentation",
+              "src": "2695:86:32",
+              "text": "@dev Returns if an module is enabled\n @return True if the module is enabled"
+            },
+            "functionSelector": "2d9ad53d",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isModuleEnabled",
+            "nameLocation": "2795:15:32",
+            "parameters": {
+              "id": 30849,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30848,
+                  "mutability": "mutable",
+                  "name": "module",
+                  "nameLocation": "2819:6:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30853,
+                  "src": "2811:14:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 30847,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2811:7:32",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2810:16:32"
+            },
+            "returnParameters": {
+              "id": 30852,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30851,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30853,
+                  "src": "2850:4:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 30850,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2850:4:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2849:6:32"
+            },
+            "scope": 30867,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 30866,
+            "nodeType": "FunctionDefinition",
+            "src": "3101:147:32",
+            "nodes": [],
+            "documentation": {
+              "id": 30854,
+              "nodeType": "StructuredDocumentation",
+              "src": "2862:234:32",
+              "text": "@dev Returns array of modules.\n @param start Start of the page.\n @param pageSize Maximum number of modules that should be returned.\n @return array Array of modules.\n @return next Start of the next page."
+            },
+            "functionSelector": "cc2f8452",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getModulesPaginated",
+            "nameLocation": "3110:19:32",
+            "parameters": {
+              "id": 30859,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30856,
+                  "mutability": "mutable",
+                  "name": "start",
+                  "nameLocation": "3138:5:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30866,
+                  "src": "3130:13:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 30855,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3130:7:32",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 30858,
+                  "mutability": "mutable",
+                  "name": "pageSize",
+                  "nameLocation": "3153:8:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30866,
+                  "src": "3145:16:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 30857,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3145:7:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3129:33:32"
+            },
+            "returnParameters": {
+              "id": 30865,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 30862,
+                  "mutability": "mutable",
+                  "name": "array",
+                  "nameLocation": "3227:5:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30866,
+                  "src": "3210:22:32",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 30860,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "3210:7:32",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 30861,
+                    "nodeType": "ArrayTypeName",
+                    "src": "3210:9:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 30864,
+                  "mutability": "mutable",
+                  "name": "next",
+                  "nameLocation": "3242:4:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 30866,
+                  "src": "3234:12:32",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 30863,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3234:7:32",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3209:38:32"
+            },
+            "scope": 30867,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IAvatar",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          30867
+        ],
+        "name": "IAvatar",
+        "nameLocation": "257:7:32",
+        "scope": 30868,
+        "usedErrors": []
+      }
+    ],
+    "license": "LGPL-3.0-only"
+  },
+  "id": 32
+}
