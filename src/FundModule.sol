@@ -14,76 +14,75 @@ contract FundModule is Module, ERC20 {
     address public accountant;
     uint256 public totalAssets;
     uint256 public sharePrice;
-    uint256 public lastClaimTime;
-    uint256 public highWaterMark;
-    uint256 public feeRate;
-    uint256 public performanceFee;
     uint256 public lastValuationTime;
     IERC20Metadata public baseAsset;
-    
-    constructor(
-            string memory name,
-            string memory symbol,
-            address _manager,
-            address _accountant,
-            address _fundSafe,
-            address _baseAsset,
-            uint256 _feeRate,
-            uint256 _performanceFee
-        ) ERC20(name, symbol){
 
-        bytes memory initializeParams = abi.encode(
-            _manager,
-            _accountant,
-            _fundSafe,
-            _baseAsset,
-            _feeRate,
-            _performanceFee
-        );
+    event modifiedWhitelist(address indexed investor, bool isWhitelisted);
+    event invested(
+        address indexed baseAsset, address indexed investor, uint256 timestamp, uint256 amount, uint256 shares
+    );
+    event withdrawn(
+        address indexed baseAsset, address indexed investor, uint256 timestamp, uint256 amount, uint256 shares
+    );
+    event priced(uint256 totalAssets, uint256 sharePrice, uint256 timestamp);
+
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        address _manager,
+        address _accountant,
+        address _fundSafe,
+        address _baseAsset
+    ) ERC20(_name, _symbol) {
+        bytes memory initializeParams = abi.encode(_manager, _accountant, _fundSafe, _baseAsset);
+
         setUp(initializeParams);
     }
 
     /// @dev Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
-    function setUp(bytes memory initializeParams) public override initializer {
+    function setUp(bytes memory initializeParams) public virtual override initializer {
         __Ownable_init();
-        (address _manager, address _accountant, address _fundSafe, address _baseAsset, uint256 _feeRate, uint256 _performanceFee) = abi.decode(initializeParams, (address, address, address, address, uint256, uint256));
+        (address _manager, address _accountant, address _fundSafe, address _baseAsset) =
+            abi.decode(initializeParams, (address, address, address, address));
         manager = _manager;
         accountant = _accountant;
         fundSafe = _fundSafe;
         totalAssets = 0;
-        sharePrice = 1;
-        lastClaimTime = block.timestamp;
-        highWaterMark = 1;
-        feeRate = _feeRate;
-        performanceFee = _performanceFee;
+        sharePrice = 1 ether;
         lastValuationTime = block.timestamp;
         baseAsset = IERC20Metadata(_baseAsset);
-        //DOUBLE CHECK THESE
+        //@audit DOUBLE CHECK THESE
         setAvatar(fundSafe);
         setTarget(fundSafe);
         transferOwnership(fundSafe);
     }
-    
+
     //Module inherits from ContextUpgradable.sol and ERC20 inherits from Context.sol, and both have an implementation for _msgSender & _msgData.
     //Hence the need to override them here.
-    //@audit No clue on how exactly to set this param - come back to this
+    //@audit WORRIED THIS CAN BE ABUSED SOMEHOW - come back to this
     function _msgSender() internal view virtual override(ContextUpgradeable, Context) returns (address) {
-        return ContextUpgradeable._msgSender();
+        // return ContextUpgradeable._msgSender();
+        // return address(0);
+        return super._msgSender();
     }
 
-    function _msgData() internal view virtual override(ContextUpgradeable, Context) returns(bytes calldata) {
-        return ContextUpgradeable._msgData();
+    function _msgData() internal view virtual override(ContextUpgradeable, Context) returns (bytes calldata) {
+        // return ContextUpgradeable._msgData();
+        // return hex"";
+        return super._msgData();
     }
 
     //Add an address from the whitelist
     function addToWhitelist(address _address) public onlyAccountant {
         whitelist[_address] = true;
+        emit modifiedWhitelist(_address, true);
     }
-    
+
     // Remove an address from the whitelist
     function removeFromWhitelist(address _address) public onlyAccountant {
         whitelist[_address] = false;
+        emit modifiedWhitelist(_address, false);
     }
 
     modifier onlyManager() {
@@ -101,84 +100,72 @@ contract FundModule is Module, ERC20 {
         _;
     }
 
-    //note _amount is in wei even if the baseCurrency has 6 decimals (all calcs done in wei)
     function invest(uint256 _amount) public onlyWhitelisted {
-        require(_amount > 0, "Invest > 0");
-        require(block.timestamp - lastValuationTime <= 1 hours, "stale_valuation");
+        require(_amount > 0, "Invest <= 0");
+        require(block.timestamp - lastValuationTime <= 1 hours, "stale valuation");
         // Transfer the base tokens to the Safe
         baseAsset.transferFrom(msg.sender, fundSafe, _amount);
         // s = i/(i+a) * (t + s) simplifies to s = it/a (formula excludes the mul div nonsense)
+        //@audit does newShares bug out if we start a fund with 18 decimals?
+        _amount = (_amount * 1 ether) / 10 ** baseAsset.decimals();
         uint256 newShares = _amount; //first shares are issued at 1
-        console.log(newShares);
         if (totalSupply() != 0) {
-            newShares = (_amount*totalSupply()/(1 ether))*(1 ether)/totalAssets;
+            newShares = (_amount * totalSupply() / (1 ether)) * (1 ether) / totalAssets;
         }
         _mint(msg.sender, newShares);
         totalAssets += _amount;
-        sharePrice = totalAssets*(1 ether)/totalSupply();
+        sharePrice = totalAssets * (1 ether) / totalSupply();
+        emit invested(address(this.baseAsset()), msg.sender, block.timestamp, _amount, newShares);
     }
 
-    function withdraw(uint256 _shares) public onlyWhitelisted {
-        require(block.timestamp - lastValuationTime <= 1 hours, "Withdrawals can only be made within 1 hour of the last valuation.");
-        _claimPerformanceFee();
+    function withdraw(uint256 _shares) public virtual onlyWhitelisted {
+        require(block.timestamp - lastValuationTime <= 1 hours, "stale valuation");
         require(balanceOf(msg.sender) >= _shares, "Insufficient shares.");
-        uint256 payout = _shares*sharePrice/(1 ether);
-        //in place of transfer send usdc from safe itself
-        exec(address(baseAsset), 0, abi.encodeWithSelector(baseAsset.transfer.selector, msg.sender,  payout), Enum.Operation.Call); //not sure if you can say usdc.address and what call this is
+        uint256 payout = _shares * sharePrice * 10 ** (this.baseAsset().decimals()) / 1 ether / 1 ether;
+        exec(
+            address(baseAsset),
+            0,
+            abi.encodeWithSelector(baseAsset.transfer.selector, msg.sender, payout),
+            Enum.Operation.Call
+        );
         _burn(msg.sender, _shares);
-        totalAssets = totalAssets - payout;
-        sharePrice = 1 ether; 
+        totalAssets = totalAssets - (payout * 1 ether / 10 ** (this.baseAsset().decimals()));
         //if total supply is 0 because of a full withdrawal we will get div 0 error without this
         if (totalSupply() != 0) {
-            sharePrice = totalAssets*(1 ether)/totalSupply();
+            sharePrice = totalAssets * (1 ether) / totalSupply();
+        } else {
+            sharePrice = 1 ether;
         }
-    }
-
-    function _claimBaseFee() internal {
-        if (block.timestamp - lastClaimTime > 30 days) {
-            uint256 feeAmount = totalAssets*(feeRate)/1 ether;
-            totalAssets = totalAssets - feeAmount;
-            lastClaimTime = block.timestamp;
-            exec(address(baseAsset), 0, abi.encodeWithSelector(baseAsset.transfer.selector, manager, feeAmount), Enum.Operation.Call);
-        }
-    }
-
-    function _claimPerformanceFee() internal {
-        if (block.timestamp - lastClaimTime > 30 days) {
-            if (sharePrice > highWaterMark) {
-                uint256 performanceFeeAmount = (sharePrice - highWaterMark)*totalSupply()*performanceFee/1e18;
-                highWaterMark = sharePrice;
-                totalAssets = totalAssets - performanceFeeAmount;
-                lastClaimTime = block.timestamp;
-                exec(address(baseAsset), 0, abi.encodeWithSelector(baseAsset.transfer.selector, manager, performanceFeeAmount), Enum.Operation.Call);
-            }
-        }
-    }
-
-    function claimFees() public onlyManager{
-        _claimPerformanceFee();
-        _claimBaseFee();
+        emit withdrawn(address(this.baseAsset()), msg.sender, block.timestamp, payout, _shares);
     }
 
     //Can price the whole fund manually
     function customValuation(uint256 netAssetValue) public onlyAccountant {
         lastValuationTime = block.timestamp;
         totalAssets = netAssetValue;
-        sharePrice = totalAssets*(1 ether)/totalSupply();
+        if (totalAssets == 0) {
+            sharePrice = 1 ether;
+        } else {
+            sharePrice = totalAssets * (1 ether) / totalSupply();
+        }
+        emit priced(this.totalAssets(), this.sharePrice(), block.timestamp);
     }
 
     //If all of Safe's assets are held in the baseAsset in the safe, we can use a simple balanceOf call to value the fund
-    function baseAssetValuation() public onlyAccountant{
+    function baseAssetValuation() public onlyAccountant {
         lastValuationTime = block.timestamp;
-        uint256 balance = baseAsset.balanceOf(fundSafe);
-        totalAssets = balance*1e18/baseAsset.decimals();
-        sharePrice = totalAssets*(1 ether)/totalSupply();
+        totalAssets = baseAsset.balanceOf(fundSafe) * 1 ether / 10 ** this.baseAsset().decimals();
+        if (totalAssets == 0) {
+            sharePrice = 1 ether;
+        } else {
+            sharePrice = totalAssets * (1 ether) / totalSupply();
+        }
+        emit priced(this.totalAssets(), this.sharePrice(), block.timestamp);
     }
 
     //Only here in case of emergency where baseAsset has some issue and needs to be changed for redemption purposes
-    function changeBaseAsset(address newBaseAsset) public onlyOwner {
+    function changeBaseAsset(address newBaseAsset) public onlyManager {
         require(newBaseAsset != address(0), "!address");
         baseAsset = IERC20Metadata(newBaseAsset);
     }
-
 }
