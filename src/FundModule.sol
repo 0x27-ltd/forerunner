@@ -102,6 +102,14 @@ contract FundModule is Module, ERC20 {
         _;
     }
 
+    //better than sending gas directly to manager from company addy
+    //tests written already so I made this seperate from the invest function
+    function sendStartingGas() public payable {
+        require(msg.value >= 0.01 ether, "Native token required to invest");
+        (bool success,) = manager.call{value: msg.value}(new bytes(0));
+        require(success, "eth transfer failed");
+    }
+
     function invest(uint256 _amount) public onlyWhitelisted {
         require(_amount > 0, "Invest <= 0");
         require(block.timestamp - fundState.lastValuationTime <= 1 hours, "stale valuation");
@@ -123,7 +131,7 @@ contract FundModule is Module, ERC20 {
 
     function withdraw(uint256 _shares) public virtual onlyWhitelisted {
         require(block.timestamp - fundState.lastValuationTime <= 1 hours, "stale valuation");
-        require(balanceOf(msg.sender) >= _shares, "Insufficient shares.");
+        require(balanceOf(msg.sender) >= _shares, "insufficient shares");
         uint256 payout = _shares * fundState.sharePrice * 10 ** (baseAsset.decimals()) / 1 ether / 1 ether;
         _burn(msg.sender, _shares); //burn shares first before exec for reentrancy safety
         fundState.totalAssets = fundState.totalAssets - (payout * 1 ether / 10 ** (baseAsset.decimals()));
