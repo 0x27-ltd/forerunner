@@ -6,11 +6,16 @@ import {MockSafe} from "../src/MockSafe.sol";
 import {FundModule} from "../src/FundModule.sol";
 import {BaseUtils} from "test/utils/BaseUtils.sol";
 import "forge-std/console.sol";
+import "forge-std/console2.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "../src/ERC20Decimal.sol";
-import "../lib/solmate/src/utils/FixedPointMathLib.sol";
+import "../lib/solmate/src/utils/FixedPointMathLib.sol"; //PRBMath also an option
+import "../lib/forge-std/src/StdInvariant.sol";
 
-contract BaseHelper is BaseUtils {
+//run with verbosity (-v -> -vvvvv): forge test -vv
+//run specific test contract: forge test -vv --match-contract ModuleTest
+//run specific test:
+contract BaseHelper is StdInvariant, BaseUtils {
     MockSafe safe;
     ERC20Decimal mockUsdc;
     FundModule fundModule;
@@ -26,8 +31,13 @@ contract BaseHelper is BaseUtils {
         manager = vm.addr(1);
         accountant = vm.addr(2);
         investor = vm.addr(3);
+        vm.label(manager, "manager"); //label addresses so the label appears in call traces not address
+        vm.label(accountant, "accountant");
+        vm.label(investor, "investor");
         fundModule = new FundModule("SHARES", "SHR", manager, accountant, address(safe), address(mockUsdc));
         safe.enableModule(address(fundModule));
+        //when StdInvariant is in use for stateful fuzz testing we need to define the target contract that will have its functions called
+        targetContract(address(fundModule));
     }
 
     function whitelistAndInvest(address _investor, uint256 _amount) public {
@@ -87,6 +97,27 @@ contract ModuleTest is BaseHelper {
         assertEq(mockUsdc.balanceOf(address(investor)), expectedBalance);
         assertEq(fundModule.balanceOf(investor), changeWei(investAmount, decimals, 18) / 2);
     }
+
+    function test_fuzzInvestAndWithdraw(uint256 amount) public {
+        uint256 ceiling = toWei(100, 6);
+        amount = bound(amount, 1000000, ceiling);
+        vm.prank(accountant);
+        fundModule.addToWhitelist(investor);
+        deal(address(mockUsdc), investor, amount, true);
+        vm.startPrank(investor);
+        mockUsdc.approve(address(fundModule), amount);
+        fundModule.invest(amount);
+        uint256 bal = fundModule.balanceOf(investor);
+        fundModule.withdraw(bal);
+        assertEq(fundModule.balanceOf(investor), 0);
+        assertEq(mockUsdc.balanceOf(investor), amount);
+        assertEq(mockUsdc.balanceOf(address(safe)), 0);
+    }
+
+    //just a dummy invariant for now
+    // function invariant_alwaysPositive() public {
+    //     assertGe(fundModule.totalSupply(), 0);
+    // }
 
     function test_canReuseStaleFundAfterFullWithdrawal() public {
         uint256 investAmount = toWei(11, decimals);
@@ -194,6 +225,7 @@ contract ModuleTest is BaseHelper {
         assertEq(mockUsdc.balanceOf(address(safe)), (114 * 1e6 * 1 ether / 2 ether + 1)); //assetsBeforeWithdraw*1 ether/2 ether);
     }
 
+    //emit events to log certain types of data if console.log not working*
     //Things to double check -> ContextUpgradeable._msgSender() issue
     //@todo
     //use FixedPointMath from solmate so make FundModule.sol more readable
@@ -204,4 +236,8 @@ contract ModuleTest is BaseHelper {
 
     //get tests working with diff decimals
     //create helper contracts like whenInvested to get test duplication down, also think about how we can reuse test code on fundmodextended
+
+    //stateless fuzzing & stateful fuzzing (invariant testing) (random: can bound a value in fuzzing with bound(var,low,high))
+    //change modify balance to deal(token,to,amount,true) ->last arg is total supply being adjusted too
+    //makefile
 }
