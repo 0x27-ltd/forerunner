@@ -15,6 +15,10 @@ import "../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
 //Next time try using:
 //https://github.com/colinnielsen/safe-tools
+
+//This also had some safe stuff that may be useful down the line:
+//https://github.com/emo-eth/create2-helpers
+
 //forge script script/BulkDeploy.s.sol:BulkDeployScript --rpc-url $LOCAL_HOST --broadcast -vvvv
 contract BulkDeployScript is Script, Test {
     //@note this is for MATIC!!!
