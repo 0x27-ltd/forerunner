@@ -20,14 +20,14 @@ contract FundModule is Module, ERC20 {
     FundState public fundState;
     IERC20Metadata public baseAsset;
 
-    event modifiedWhitelist(address indexed investor, uint256 timestamp, bool isWhitelisted);
-    event invested(
+    event ModifiedWhitelist(address indexed investor, uint256 timestamp, bool isWhitelisted);
+    event Invested(
         address indexed baseAsset, address indexed investor, uint256 timestamp, uint256 amount, uint256 shares
     );
-    event withdrawn(
+    event Withdrawn(
         address indexed baseAsset, address indexed investor, uint256 timestamp, uint256 amount, uint256 shares
     );
-    event priced(uint256 totalAssets, uint256 sharePrice, uint256 timestamp);
+    event Priced(uint256 totalAssets, uint256 sharePrice, uint256 timestamp);
 
     constructor(
         string memory _name,
@@ -77,14 +77,14 @@ contract FundModule is Module, ERC20 {
     function addToWhitelist(address _address) public onlyAccountant {
         require(_address != address(0), "!address");
         whitelist[_address] = true;
-        emit modifiedWhitelist(_address, block.timestamp, true);
+        emit ModifiedWhitelist(_address, block.timestamp, true);
     }
 
     // Remove an address from the whitelist
     function removeFromWhitelist(address _address) public onlyAccountant {
         require(_address != address(0), "!address");
         whitelist[_address] = false;
-        emit modifiedWhitelist(_address, block.timestamp, false);
+        emit ModifiedWhitelist(_address, block.timestamp, false);
     }
 
     modifier onlyManager() {
@@ -126,7 +126,7 @@ contract FundModule is Module, ERC20 {
         _mint(msg.sender, newShares);
         fundState.totalAssets += _amount;
         fundState.sharePrice = fundState.totalAssets * (1 ether) / totalSupply();
-        emit invested(address(baseAsset), msg.sender, block.timestamp, _amount, newShares);
+        emit Invested(address(baseAsset), msg.sender, block.timestamp, _amount, newShares);
     }
 
     function withdraw(uint256 _shares) public virtual onlyWhitelisted {
@@ -147,7 +147,7 @@ contract FundModule is Module, ERC20 {
             abi.encodeWithSelector(baseAsset.transfer.selector, msg.sender, payout),
             Enum.Operation.Call
         );
-        emit withdrawn(address(baseAsset), msg.sender, block.timestamp, payout, _shares);
+        emit Withdrawn(address(baseAsset), msg.sender, block.timestamp, payout, _shares);
     }
 
     //Can price the whole fund manually
@@ -159,7 +159,7 @@ contract FundModule is Module, ERC20 {
         } else {
             fundState.sharePrice = fundState.totalAssets * (1 ether) / totalSupply();
         }
-        emit priced(fundState.totalAssets, fundState.sharePrice, block.timestamp);
+        emit Priced(fundState.totalAssets, fundState.sharePrice, block.timestamp);
     }
 
     //If all of Safe's assets are held in the baseAsset in the safe, we can use a simple balanceOf call to value the fund
@@ -171,7 +171,7 @@ contract FundModule is Module, ERC20 {
         } else {
             fundState.sharePrice = fundState.totalAssets * (1 ether) / totalSupply();
         }
-        emit priced(fundState.totalAssets, fundState.sharePrice, block.timestamp);
+        emit Priced(fundState.totalAssets, fundState.sharePrice, block.timestamp);
     }
 
     //Only here in case of emergency where baseAsset has some issue and needs to be changed for redemption purposes

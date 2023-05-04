@@ -18,6 +18,6 @@ contract RevalueScript is Script, Test {
     function run() public {
         IFundModule fundModule = IFundModule(0x4F057c87b1cB4705CAC8a580272dA772D85C169b);
         vm.startBroadcast(vm.envUint("FOX_PRIVATE_KEY"));
-        fundModule.customValuation(0.92 ether);
+        fundModule.customValuation(0.96 ether);
     }
 }
