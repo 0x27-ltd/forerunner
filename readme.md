@@ -2,7 +2,7 @@
 
 ## On-chain Investment Funds Reimagined 📈
 
-A better way to structure Investment Funds, extending Safe through a module that enables the functionality of a fully fleged regulated Investment Fund.
+A better way to structure Investment Funds, extending Safe through a module that enables the functionality of a fully flegded regulated Investment Fund.
 
 ## Why is this good for Safe?
 Statista estimates that $60 Trillion lives in Investment Funds in 2022. Over the long term these assets will flow on-chain. This represents a cartoonishly large opportunity for technology providers to house these flows. The TVL a regulatory considerate Investment Fund framework could bring to Safe is immense.
