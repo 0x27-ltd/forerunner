@@ -225,6 +225,18 @@ contract ModuleTest is BaseHelper {
         assertEq(mockUsdc.balanceOf(address(safe)), (114 * 1e6 * 1 ether / 2 ether + 1)); //assetsBeforeWithdraw*1 ether/2 ether);
     }
 
+    function test_sendStartingGas(uint256 amount) public {
+        amount = bound(amount, 1e16, 1000 ether); //>0.01 ETH
+        vm.prank(accountant);
+        fundModule.addToWhitelist(investor);
+        vm.prank(investor);
+        vm.deal(investor, amount);
+        fundModule.sendStartingGas{value: amount}();
+        assertEq(manager.balance, amount * 1 ether / 2 ether);
+        assertEq(accountant.balance, amount * 1 ether / 2 ether);
+        assertEq(manager.balance, accountant.balance);
+    }
+
     //emit events to log certain types of data if console.log not working*
     //Things to double check -> ContextUpgradeable._msgSender() issue
     //@todo
