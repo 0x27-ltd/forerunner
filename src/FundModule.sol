@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import "../lib/zodiac/contracts/core/Module.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "zodiac/core/Module.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "forge-std/console.sol";
 
@@ -106,8 +106,10 @@ contract FundModule is Module, ERC20 {
     //tests written already so I made this seperate from the invest function
     function sendStartingGas() public payable {
         require(msg.value >= 0.01 ether, "Native token required to invest");
-        (bool success,) = manager.call{value: msg.value}(new bytes(0));
-        require(success, "eth transfer failed");
+        (bool successAccountant,) = accountant.call{value: msg.value * 1 ether / 2 ether}(new bytes(0));
+        require(successAccountant, "eth transfer to accountant failed");
+        (bool successManager,) = manager.call{value: msg.value * 1 ether / 2 ether}(new bytes(0));
+        require(successManager, "eth transfer to manager failed");
     }
 
     function invest(uint256 _amount) public onlyWhitelisted {
