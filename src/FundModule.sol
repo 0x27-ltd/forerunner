@@ -14,7 +14,17 @@ contract FundModule is Module, ERC20 {
         uint256 lastValuationTime;
     }
 
+    struct PendingTransaction {
+        address investor;
+        uint256 valueOrShares; //this is either a value or shares amount :/
+        bool isInflow;
+    }
+
+    // PendingTransaction[] private transactionQueue;
+    mapping(address => PendingTransaction[]) private transactionQueue;
+
     mapping(address => bool) public whitelist;
+    address[] private whitelistAddresses;
     address public manager;
     address public accountant;
     FundState public fundState;
@@ -76,7 +86,9 @@ contract FundModule is Module, ERC20 {
     //Add an address from the whitelist
     function addToWhitelist(address _address) public onlyAccountant {
         require(_address != address(0), "!address");
+        require(!whitelist[_address], "address already in the whitelist");
         whitelist[_address] = true;
+        whitelistAddresses.push(_address);
         emit ModifiedWhitelist(_address, block.timestamp, true);
     }
 
@@ -84,6 +96,19 @@ contract FundModule is Module, ERC20 {
     function removeFromWhitelist(address _address) public onlyAccountant {
         require(_address != address(0), "!address");
         whitelist[_address] = false;
+        //Need to remove addy from whitelistAddresses array too
+        uint256 indexToRemove = 0;
+        for (uint256 i = 0; i < whitelistAddresses.length; i++) {
+            if (whitelistAddresses[i] == _address) {
+                indexToRemove = i;
+                break;
+            }
+        }
+        //If the address is found in the array, remove it by swapping with the last element and then reducing the array length
+        if (indexToRemove < whitelistAddresses.length - 1) {
+            whitelistAddresses[indexToRemove] = whitelistAddresses[whitelistAddresses.length - 1];
+        }
+        whitelistAddresses.pop();
         emit ModifiedWhitelist(_address, block.timestamp, false);
     }
 
@@ -102,19 +127,50 @@ contract FundModule is Module, ERC20 {
         _;
     }
 
-    //better than sending gas directly to manager from company addy
-    //tests written already so I made this seperate from the invest function
-    function sendStartingGas() public payable {
-        require(msg.value >= 0.01 ether, "Native token required to invest");
-        (bool successAccountant,) = accountant.call{value: msg.value * 1 ether / 2 ether}(new bytes(0));
-        require(successAccountant, "eth transfer to accountant failed");
-        (bool successManager,) = manager.call{value: msg.value * 1 ether / 2 ether}(new bytes(0));
-        require(successManager, "eth transfer to manager failed");
+    function queueInvestment(uint256 _amount) public onlyWhitelisted {
+        require(_amount > 0, "invest <= 0");
+        require(baseAsset.balanceOf(msg.sender) >= _amount, "Insufficient baseAsset");
+        transactionQueue[msg.sender] = PendingTransaction(msg.sender, _amount, true);
     }
 
-    function invest(uint256 _amount) public onlyWhitelisted {
+    function queueWithdrawal(uint256 _shares) public onlyWhitelisted {
+        require(_shares > 0, "shares <= 0");
+        require(balanceOf(msg.sender) >= _shares, "insufficient shares");
+        transactionQueue[msg.sender] = PendingTransaction(msg.sender, _shares, false);
+    }
+
+    function cancelQueuedAction() public onlyWhitelisted {
+        PendingTransaction memory transaction = transactionQueue[investor];
+        if (transaction.investor != address(0)) {
+            delete transactionQueue[investor];
+        }
+    }
+
+    function updateStateWithPrice(uint256 netAssetValue) public onlyAccountant {
+        //value fund so shares can be accurately issued and burnt
+        _customValuation(netAssetValue);
+        for (uint256 i = 0; i < whitelistAddresses.length; i++) {
+            address memory investor = whitelistAddresses[i];
+            PendingTransaction memory transaction = transactionQueue[investor];
+            if (transaction.investor != address(0)) {
+                //empty struct default value is the zero for that type so here we are basically checking transaction is not empty
+                if (transaction.isInflow) {
+                    //pull funds and issue shares
+                    _invest(transaction.valueOrShares);
+                } else {
+                    //burn shares and send funds
+                    _withdraw(transaction.valueOrShares);
+                }
+                // Clear the investor's transaction queue
+                delete transactionQueue[investor];
+            }
+        }
+    }
+
+    //@audit make this and other internal functions nonreentrant
+    function _invest(uint256 _amount) internal {
         require(_amount > 0, "Invest <= 0");
-        require(block.timestamp - fundState.lastValuationTime <= 1 hours, "stale valuation");
+        // require(block.timestamp - fundState.lastValuationTime <= 1 hours, "stale valuation");
         require(baseAsset.balanceOf(msg.sender) >= _amount, "Insufficient baseAsset");
         baseAsset.transferFrom(msg.sender, this.avatar(), _amount);
         // s = i/(i+a) * (t + s) simplifies to s = it/a (formula excludes the mul div nonsense)
@@ -131,8 +187,8 @@ contract FundModule is Module, ERC20 {
         emit Invested(address(baseAsset), msg.sender, block.timestamp, _amount, newShares);
     }
 
-    function withdraw(uint256 _shares) public virtual onlyWhitelisted {
-        require(block.timestamp - fundState.lastValuationTime <= 1 hours, "stale valuation");
+    function _withdraw(uint256 _shares) internal {
+        // require(block.timestamp - fundState.lastValuationTime <= 1 hours, "stale valuation");
         require(balanceOf(msg.sender) >= _shares, "insufficient shares");
         uint256 payout = _shares * fundState.sharePrice * 10 ** (baseAsset.decimals()) / 1 ether / 1 ether;
         _burn(msg.sender, _shares); //burn shares first before exec for reentrancy safety
@@ -153,7 +209,7 @@ contract FundModule is Module, ERC20 {
     }
 
     //Can price the whole fund manually
-    function customValuation(uint256 netAssetValue) public onlyAccountant {
+    function _customValuation(uint256 netAssetValue) internal {
         fundState.lastValuationTime = block.timestamp;
         fundState.totalAssets = netAssetValue;
         if (fundState.totalAssets == 0) {
