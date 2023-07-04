@@ -15,3 +15,6 @@ docs/
 
 # Tx output folder
 broadcast/
+
+# Notes
+foundryNotes.md

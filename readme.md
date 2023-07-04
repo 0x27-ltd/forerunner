@@ -1,23 +1,27 @@
-# Forge Deployment Script Notes
+# Forerunner 🌱🔮
 
-### Deploy to Anvil localhost
-* create deploy script like FundModule.s.sol (not no private key needed for the vm.broadcast/vm.startBroadcast bit)
-* run command: anvil in a seperate terminal to get the local rpc listening on http://127.0.0.1:8545 
-    * If you include a --fork-url flag you can fork a different network @ specific block: anvil --fork-url $GOERLI_RPC_URL --fork-block-number 8905280
-* forge script script/FundModule.s.sol:FundModuleScript --rpc-url http://127.0.0.1:8545 (or $LOCAL_HOST if you have that in .env file)
-* note that the script may contain more than one contract, hence the :FundModuleScript above
+## On-chain Investment Funds Reimagined 📈
 
-### Deploy live setup
-* .env file save chain rpcs like this RINKEBY_RPC_URL=insert_rpc_url
-* To give our shell access to our environment variables run: source .env
-* save rpc's as env variable (can also save PRIVATE_KEY & ETHERSCAN_KEY)
-* Replace the localhost with this format to deploy to that chain --rpc-url $RINKEBY_RPC_URL
-* Tip: if you want to simulate and form a deployment tx to see gas (it saves in broadcast folder) without sending, don't add --broadcast flag
+A better way to structure Investment Funds, extending Safe through a module that enables the functionality of a fully fleged regulated Investment Fund.
 
-### Example of full deployment and verification with verbose output
-forge script script/MyToken.s.sol:MyScript --rpc-url $RINKEBY_RPC_URL  --private-key $PRIVATE_KEY --broadcast --verify --etherscan-api-key $ETHERSCAN_KEY -vvvv
+## Why is this good for Safe?
+Statista estimates that $60 Trillion lives in Investment Funds in 2022. Over the long term these assets will flow on-chain. This represents a cartoonishly large opportunity for technology providers to house these flows. The TVL a regulatory considerate Investment Fund framework could bring to Safe is immense.
 
-# Useful Resources
-* https://github.com/dabit3/foundry-cheatsheet
-* https://github.com/crisgarner/awesome-foundry
-* nice tutorial: https://jamesbachini.com/foundry-tutorial/
+[source](https://www.statista.com/statistics/1194559/net-assets-regulated-open-end-funds-worldwide-type/)
+
+## How, simply?
+* Investment Fund Module provides the logic to run a Fund
+* Zodiac Roles Modifier ensures sound access control
+* Investors use Safe with Auth Kit for MPC & improved key managment
+
+### Planned Features (MVP): 📅
+
+* 👫 Stakeholder management (Fund Admin, Manager, Investor, Guardian)
+* 💸 AUM Fee & HWM Performance Fee
+* 💰 Withdraw/Invest Queue
+* 🔄 Admin state updates
+* 🏳️ Investor KYC Whitelist
+* 🏛️ Jurisdiction specific regulation
+
+### P.S
+Please note some legacy code here relfects the initial idea for this project that is now stale, a small scale personal Fund framework. Stay tuned - substantial refactoring incoming!
