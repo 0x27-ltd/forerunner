@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "zodiac/core/Module.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "forge-std/console.sol";
+import "./IInvestorLimits.sol";
 
 contract FundModule is Module, ERC20 {
     struct FundState {
@@ -39,6 +40,8 @@ contract FundModule is Module, ERC20 {
     address public accountant;
     FundState public fundState;
     IERC20Metadata public baseAsset;
+    address[] private _investors;
+    IInvestorLimits public investorLimits;
 
     event ModifiedWhitelist(address indexed investor, uint256 timestamp, bool isWhitelisted);
     event Invested(
@@ -58,12 +61,14 @@ contract FundModule is Module, ERC20 {
         address _baseAsset,
         uint256 _aumFeeRatePerSecond,
         uint256 _perfFeeRate,
-        uint256 _crystalisationPeriod
+        uint256 _crystalisationPeriod,
+        address _investorLimits
     ) ERC20(_name, _symbol) {
         bytes memory initializeParams = abi.encode(
             _manager, _accountant, _fundSafe, _baseAsset, _aumFeeRatePerSecond, _perfFeeRate, _crystalisationPeriod
         );
         setUp(initializeParams);
+        investorLimits = IInvestorLimits(_investorLimits);
     }
 
     /// @dev Initialize function, will be triggered when a new proxy is deployed
@@ -241,6 +246,11 @@ contract FundModule is Module, ERC20 {
         if (totalSupply() != 0) {
             newShares = (_amount * totalSupply() / (1 ether)) * (1 ether) / fundState.totalAssets;
         }
+        // if the investor does not have any shares, add them to the array
+        //@todo oof just remembered that this wouldnt work because if we allow transfer() to work between EOAs & smart wallets, this logic would fail
+        if (balanceOf(msg.sender) == 0) {
+            investorLimits.addInvestor();
+        }
         _mint(msg.sender, newShares);
         fundState.totalAssets += _amount;
         fundState.sharePrice = fundState.totalAssets * (1 ether) / totalSupply();
@@ -266,6 +276,10 @@ contract FundModule is Module, ERC20 {
             netPayout = grossPayout;
         }
         _burn(msg.sender, _shares);
+        // if the investor does not have any shares, remove them to the array
+        if (balanceOf(msg.sender) == 0) {
+            investorLimits.removeInvestor();
+        }
         fundState.totalAssets = fundState.totalAssets - (grossPayout * 1 ether / 10 ** (baseAsset.decimals()));
         //if total supply is 0 because of a full withdrawal we will get div 0 error without this
         if (totalSupply() != 0) {
