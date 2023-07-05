@@ -9,28 +9,30 @@ import "forge-std/console.sol";
 
 contract FundModule is Module, ERC20 {
     struct FundState {
-        uint256 totalAssets;
-        uint256 sharePrice;
-        uint256 highWaterMark;
-        uint256 lastValuationTime;
-        uint256 lastAumFeeCalcTime;
-        uint256 pendingAumFees;
-        uint256 pendingPerfFees;
-        uint256 aumFeeRatePerSecond;
-        uint256 perfFeeRate;
-        uint256 lastCrystalised;
-        uint256 crystalisationPeriod;
+        uint256 totalAssets; //NAV of fund
+        uint256 sharePrice; //Price per share of fund
+        uint256 highWaterMark; //A share price level that needs to be exceeded for performance to be due
+        uint256 lastValuationTime; //last time the accountant/fund admin valued the fund
+        uint256 lastAumFeeCalcTime; //last time a aum fee calculation was made
+        uint256 pendingAumFees; //pending but unpaid aum fees
+        uint256 pendingPerfFees; //pending but unpaid performance fees
+        uint256 aumFeeRatePerSecond; //aum fee charge per second to simplfy fee calcs
+        uint256 perfFeeRate; //performance fee amount
+        uint256 lastCrystalised; //timestamp of last time performance fees where crystalised and paid
+        uint256 crystalisationPeriod; //how much time needs to pass before performance fees can be claimed periodically
     }
 
+    //investors wanting to withdraw/invest queue an action to do so, this action is stored in a PendingTransaction
     struct PendingTransaction {
         address investor;
         uint256 valueOrShares; //this is either a value or shares amount :/
         bool isInflow;
     }
 
-    // PendingTransaction[] private transactionQueue;
+    //map an investor's addy to their PendingTransaction
     mapping(address => PendingTransaction) private transactionQueue;
 
+    //kyc whitelist
     mapping(address => bool) public whitelist;
     address[] private whitelistAddresses;
     address public manager;
@@ -67,6 +69,7 @@ contract FundModule is Module, ERC20 {
     /// @dev Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
     function setUp(bytes memory initializeParams) public virtual override initializer {
+        //This func is needed for modules as they are minimal proxies pointing to a master copy so its like a constructor work around
         __Ownable_init();
         (
             address _manager,
@@ -92,8 +95,9 @@ contract FundModule is Module, ERC20 {
             lastCrystalised: block.timestamp,
             crystalisationPeriod: _crystalisationPeriod
         });
+        //IERC20Metadata was needed as it also exposes decimals()
         baseAsset = IERC20Metadata(_baseAsset);
-        require(baseAsset.decimals() <= 18); //precision errors will arise if decimals > 18
+        require(baseAsset.decimals() <= 18); //@note precision errors will arise if decimals > 18
         //This module will execute tx's on behalf of this avatar (aka sc wallet)
         setAvatar(_fundSafe);
         //Safe modules call on the Target contract (in our case its the safe too) so it to be set
@@ -102,7 +106,7 @@ contract FundModule is Module, ERC20 {
     }
 
     //Module inherits from ContextUpgradable.sol and ERC20 inherits from Context.sol, and both have an implementation for _msgSender & _msgData. Hence the need to override them here.
-    //@audit WORRIED THIS CAN BE ABUSED SOMEHOW - come back to this
+    //@audit Can this be abused? We are forced to implement something here. Come back to this
     function _msgSender() internal view virtual override(ContextUpgradeable, Context) returns (address) {
         // return ContextUpgradeable._msgSender();
         // return address(0);
@@ -115,7 +119,7 @@ contract FundModule is Module, ERC20 {
         return super._msgData();
     }
 
-    //Add an address from the whitelist
+    //Add a kyc'd investors address to the investor whitelist. The fund admin does this only after off-chain kyc completed
     function addToWhitelist(address _address) public onlyAccountant {
         require(_address != address(0), "!address");
         require(!whitelist[_address], "address already in the whitelist");
@@ -124,7 +128,7 @@ contract FundModule is Module, ERC20 {
         emit ModifiedWhitelist(_address, block.timestamp, true);
     }
 
-    // Remove an address from the whitelist
+    // Remove an address from the kyc whitelist
     function removeFromWhitelist(address _address) public onlyAccountant {
         require(_address != address(0), "!address");
         whitelist[_address] = false;
@@ -159,6 +163,7 @@ contract FundModule is Module, ERC20 {
         _;
     }
 
+    //Allows investors queue actions to invest
     function queueInvestment(uint256 _amount) public onlyWhitelisted {
         require(_amount > 0, "invest <= 0");
         require(baseAsset.balanceOf(msg.sender) >= _amount, "Insufficient baseAsset");
@@ -166,6 +171,7 @@ contract FundModule is Module, ERC20 {
         transactionQueue[msg.sender] = PendingTransaction(msg.sender, _amount, true);
     }
 
+    //Allows investors queue actions to withdraw
     function queueWithdrawal(uint256 _shares) public onlyWhitelisted {
         require(_shares > 0, "shares <= 0");
         require(balanceOf(msg.sender) >= _shares, "insufficient shares");
@@ -173,6 +179,7 @@ contract FundModule is Module, ERC20 {
         transactionQueue[msg.sender] = PendingTransaction(msg.sender, _shares, false);
     }
 
+    //Allows investors to cancel a previously queuedAction
     function cancelQueuedAction() public onlyWhitelisted {
         PendingTransaction memory transaction = transactionQueue[msg.sender];
         if (transaction.investor != address(0)) {
@@ -180,19 +187,19 @@ contract FundModule is Module, ERC20 {
         }
     }
 
+    //Fund admin calls this to price the fund, and subsequent actions can be processed like investments, withdrawals and fee payments.
     function updateStateWithPrice(uint256 netAssetValue) public onlyAccountant {
         //value fund so shares can be accurately issued and burnt
         _customValuation(netAssetValue);
+        //calculate fees due, these need to be paid before investments and withdrawals take place
         _calculatePendingAumFee();
         _calculatePendingPerfFee();
-        //ensure crystalistaion period has been met before paying out perf fees
-        //if an investor withdraws while perf fees not crystalised yet it makes sense to crystalise their portion
+        //Ensure crystalistaion period has been met before paying out all the performance fees
         if (fundState.lastCrystalised >= fundState.crystalisationPeriod) {
-            //payout both aum and performance fees as performance fees have crystalised
             _payoutPerfFees();
             _payoutAumFees();
         } else {
-            //payout only aum fees as performance has not yet crystalised
+            //payout only aum fees as performance fee has not yet crystalised
             _payoutAumFees();
         }
         //@todo Do we need to process withdrawals first before we process investments? worried about inaccurate share issuance if we don't do it seperatley [verify this!]
@@ -201,13 +208,16 @@ contract FundModule is Module, ERC20 {
             PendingTransaction memory transaction = transactionQueue[investor];
             //empty struct default value is the zero for that type so here we are basically checking transaction is not empty
             if (transaction.investor != address(0)) {
+                //transaction is a withdrawal
                 if (!transaction.isInflow) {
-                    //if pending fees are zero then isPendingUncrystalised will false
+                    //if pending fees are zero then isPendingUncrystalised will false as all fees would be paid up already
+                    //@todo is isPendingUncrystalised bool necessary? maybe the zero value if fees paid up won't cause issues with withdraw
                     if (fundState.pendingPerfFees != 0) {
                         _withdraw(transaction.valueOrShares, true);
                     } else {
                         _withdraw(transaction.valueOrShares, false);
                     }
+                    //transaction is an investment
                 } else {
                     _invest(transaction.valueOrShares);
                 }
@@ -216,16 +226,17 @@ contract FundModule is Module, ERC20 {
         }
     }
 
-    //@audit potentially make this and other internal functions nonreentrant
+    //Process the investment action, to be called when processing transaction queue
     function _invest(uint256 _amount) internal {
         require(_amount > 0, "Invest <= 0");
-        // require(block.timestamp - fundState.lastValuationTime <= 1 hours, "stale valuation");
         require(baseAsset.balanceOf(msg.sender) >= _amount, "Insufficient baseAsset");
         baseAsset.transferFrom(msg.sender, this.avatar(), _amount);
-        // s = i/(i+a) * (t + s) simplifies to s = it/a (formula excludes the mul div nonsense)
-        //@audit does newShares bug out if we start a fund with 18 decimals?
+        // Share issuance formula:
+        // s = i/(i+a) * (t + s) simplifies to s = it/a
+        //@todo does newShares bug out if we start a fund with 18 decimals?
         _amount = (_amount * 1 ether) / 10 ** baseAsset.decimals();
         // Transfer the base tokens to the Safe
+        // @audit lol not sure how i missed this but we aren't even pulling baseAsset from the investor. Will do this next!
         uint256 newShares = _amount; //first shares are issued at 1
         if (totalSupply() != 0) {
             newShares = (_amount * totalSupply() / (1 ether)) * (1 ether) / fundState.totalAssets;
@@ -236,16 +247,17 @@ contract FundModule is Module, ERC20 {
         emit Invested(address(baseAsset), msg.sender, block.timestamp, _amount, newShares);
     }
 
-    //@audit left off here. This withdraw func assumes pending perf fees are due which may not be the case as they could be zero from meeting crystalisation period.
-    //add a bool isPendingUncrystalised that is caught in an if that gives correct netPayout etc in both cases
+    //Process the withdraw action, to be called when processing the transaction queue
     function _withdraw(uint256 _shares, bool isPendingUncrystalised) internal {
         require(balanceOf(msg.sender) >= _shares, "insufficient shares");
+        //Investors share of assets
         uint256 grossPayout = _shares * fundState.sharePrice * 10 ** (baseAsset.decimals()) / 1 ether / 1 ether;
-
-        //we need to deduct perfomance fees that may not have been crystalised yet before an investor leaves the fund
+        //we need to deduct perfomance fees that may not have been crystalised yet before an investor leaves the fund. Without this manager gets screwed.
         uint256 netPayout;
         if (isPendingUncrystalised) {
+            //investors share of uncrystalised performance fees
             uint256 crystalisedShareOfFees = _shares * fundState.pendingPerfFees / totalSupply() / 1 ether; //@todo fix weimath here - also could there be a case of zero total supply?
+            //ensure investor receives netPayout and not gross as fees are owed to the manager
             netPayout = grossPayout - crystalisedShareOfFees;
             fundState.pendingPerfFees -= crystalisedShareOfFees;
             _pay(manager, crystalisedShareOfFees);
@@ -253,9 +265,8 @@ contract FundModule is Module, ERC20 {
             //here no perf fee is due
             netPayout = grossPayout;
         }
-        //burn shares first before exec for reentrancy safety
         _burn(msg.sender, _shares);
-        fundState.totalAssets = fundState.totalAssets - (grossPayout * 1 ether / 10 ** (baseAsset.decimals())); //note that we use grossPayout here as this is the investor assets and fees that leave the fund
+        fundState.totalAssets = fundState.totalAssets - (grossPayout * 1 ether / 10 ** (baseAsset.decimals()));
         //if total supply is 0 because of a full withdrawal we will get div 0 error without this
         if (totalSupply() != 0) {
             fundState.sharePrice = fundState.totalAssets * (1 ether) / totalSupply();
@@ -266,6 +277,7 @@ contract FundModule is Module, ERC20 {
         emit Withdrawn(address(baseAsset), msg.sender, block.timestamp, netPayout, _shares);
     }
 
+    //calculate aum fees due since last time the calc was performed, but don't pay
     function _calculatePendingAumFee() internal {
         uint256 aumFeeAmount = fundState.totalAssets
             * (fundState.aumFeeRatePerSecond * (block.timestamp - fundState.lastAumFeeCalcTime)) / 1 ether;
@@ -273,6 +285,7 @@ contract FundModule is Module, ERC20 {
         fundState.lastAumFeeCalcTime = block.timestamp;
     }
 
+    //calculate perf fees due since last time the calc was performed, but don't pay
     function _calculatePendingPerfFee() internal {
         //True implies perf fee and aum fee due, false means only aum fee due
         if (fundState.sharePrice > fundState.highWaterMark) {
@@ -286,12 +299,14 @@ contract FundModule is Module, ERC20 {
         }
     }
 
+    //Helper just to send baseAsset around (to manager for fees for example)
     function _pay(address to, uint256 amount) internal {
         exec(
             address(baseAsset), 0, abi.encodeWithSelector(baseAsset.transfer.selector, to, amount), Enum.Operation.Call
         );
     }
 
+    //process pending aum fee payment due to manager
     function _payoutAumFees() internal {
         uint256 feesDue = fundState.pendingAumFees;
         fundState.totalAssets -= feesDue;
@@ -299,6 +314,7 @@ contract FundModule is Module, ERC20 {
         _pay(manager, feesDue);
     }
 
+    //process pending perf fee payment due to manager
     function _payoutPerfFees() internal {
         uint256 feesDue = fundState.pendingPerfFees;
         fundState.totalAssets -= feesDue;
@@ -306,7 +322,7 @@ contract FundModule is Module, ERC20 {
         _pay(manager, feesDue);
     }
 
-    //Can price the whole fund manually
+    //Allows fund admin to price the fund via other func
     function _customValuation(uint256 netAssetValue) internal {
         fundState.lastValuationTime = block.timestamp;
         fundState.totalAssets = netAssetValue;
@@ -319,6 +335,7 @@ contract FundModule is Module, ERC20 {
     }
 
     //If all of Safe's assets are held in the baseAsset in the safe, we can use a simple balanceOf call to value the fund
+    //@todo potentially remove this
     function baseAssetValuation() public onlyAccountant {
         fundState.lastValuationTime = block.timestamp;
         fundState.totalAssets = baseAsset.balanceOf(this.avatar()) * 1 ether / 10 ** baseAsset.decimals();
