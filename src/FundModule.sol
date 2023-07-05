@@ -11,7 +11,15 @@ contract FundModule is Module, ERC20 {
     struct FundState {
         uint256 totalAssets;
         uint256 sharePrice;
+        uint256 highWaterMark;
         uint256 lastValuationTime;
+        uint256 lastAumFeeCalcTime;
+        uint256 pendingAumFees;
+        uint256 pendingPerfFees;
+        uint256 aumFeeRatePerSecond;
+        uint256 perfFeeRate;
+        uint256 lastCrystalised;
+        uint256 crystalisationPeriod;
     }
 
     struct PendingTransaction {
@@ -21,7 +29,7 @@ contract FundModule is Module, ERC20 {
     }
 
     // PendingTransaction[] private transactionQueue;
-    mapping(address => PendingTransaction[]) private transactionQueue;
+    mapping(address => PendingTransaction) private transactionQueue;
 
     mapping(address => bool) public whitelist;
     address[] private whitelistAddresses;
@@ -45,9 +53,14 @@ contract FundModule is Module, ERC20 {
         address _manager,
         address _accountant,
         address _fundSafe,
-        address _baseAsset
+        address _baseAsset,
+        uint256 _aumFeeRatePerSecond,
+        uint256 _perfFeeRate,
+        uint256 _crystalisationPeriod
     ) ERC20(_name, _symbol) {
-        bytes memory initializeParams = abi.encode(_manager, _accountant, _fundSafe, _baseAsset);
+        bytes memory initializeParams = abi.encode(
+            _manager, _accountant, _fundSafe, _baseAsset, _aumFeeRatePerSecond, _perfFeeRate, _crystalisationPeriod
+        );
         setUp(initializeParams);
     }
 
@@ -55,11 +68,30 @@ contract FundModule is Module, ERC20 {
     /// @param initializeParams Parameters of initialization encoded
     function setUp(bytes memory initializeParams) public virtual override initializer {
         __Ownable_init();
-        (address _manager, address _accountant, address _fundSafe, address _baseAsset) =
-            abi.decode(initializeParams, (address, address, address, address));
+        (
+            address _manager,
+            address _accountant,
+            address _fundSafe,
+            address _baseAsset,
+            uint256 _aumFeeRatePerSecond,
+            uint256 _perfFeeRate,
+            uint256 _crystalisationPeriod
+        ) = abi.decode(initializeParams, (address, address, address, address, uint256, uint256, uint256));
         manager = _manager;
         accountant = _accountant;
-        fundState = FundState({totalAssets: 0, sharePrice: 1 ether, lastValuationTime: block.timestamp});
+        fundState = FundState({
+            totalAssets: 0,
+            sharePrice: 1 ether,
+            highWaterMark: 1 ether,
+            lastValuationTime: block.timestamp,
+            lastAumFeeCalcTime: block.timestamp,
+            pendingAumFees: 0,
+            pendingPerfFees: 0,
+            aumFeeRatePerSecond: _aumFeeRatePerSecond,
+            perfFeeRate: _perfFeeRate,
+            lastCrystalised: block.timestamp,
+            crystalisationPeriod: _crystalisationPeriod
+        });
         baseAsset = IERC20Metadata(_baseAsset);
         require(baseAsset.decimals() <= 18); //precision errors will arise if decimals > 18
         //This module will execute tx's on behalf of this avatar (aka sc wallet)
@@ -130,44 +162,61 @@ contract FundModule is Module, ERC20 {
     function queueInvestment(uint256 _amount) public onlyWhitelisted {
         require(_amount > 0, "invest <= 0");
         require(baseAsset.balanceOf(msg.sender) >= _amount, "Insufficient baseAsset");
+        require(transactionQueue[msg.sender].investor == address(0), "investor already in queue");
         transactionQueue[msg.sender] = PendingTransaction(msg.sender, _amount, true);
     }
 
     function queueWithdrawal(uint256 _shares) public onlyWhitelisted {
         require(_shares > 0, "shares <= 0");
         require(balanceOf(msg.sender) >= _shares, "insufficient shares");
+        require(transactionQueue[msg.sender].investor == address(0), "investor already in queue");
         transactionQueue[msg.sender] = PendingTransaction(msg.sender, _shares, false);
     }
 
     function cancelQueuedAction() public onlyWhitelisted {
-        PendingTransaction memory transaction = transactionQueue[investor];
+        PendingTransaction memory transaction = transactionQueue[msg.sender];
         if (transaction.investor != address(0)) {
-            delete transactionQueue[investor];
+            delete transactionQueue[msg.sender];
         }
     }
 
     function updateStateWithPrice(uint256 netAssetValue) public onlyAccountant {
         //value fund so shares can be accurately issued and burnt
         _customValuation(netAssetValue);
+        _calculatePendingAumFee();
+        _calculatePendingPerfFee();
+        //ensure crystalistaion period has been met before paying out perf fees
+        //if an investor withdraws while perf fees not crystalised yet it makes sense to crystalise their portion
+        if (fundState.lastCrystalised >= fundState.crystalisationPeriod) {
+            //payout both aum and performance fees as performance fees have crystalised
+            _payoutPerfFees();
+            _payoutAumFees();
+        } else {
+            //payout only aum fees as performance has not yet crystalised
+            _payoutAumFees();
+        }
+        //@todo Do we need to process withdrawals first before we process investments? worried about inaccurate share issuance if we don't do it seperatley [verify this!]
         for (uint256 i = 0; i < whitelistAddresses.length; i++) {
-            address memory investor = whitelistAddresses[i];
+            address investor = whitelistAddresses[i];
             PendingTransaction memory transaction = transactionQueue[investor];
+            //empty struct default value is the zero for that type so here we are basically checking transaction is not empty
             if (transaction.investor != address(0)) {
-                //empty struct default value is the zero for that type so here we are basically checking transaction is not empty
-                if (transaction.isInflow) {
-                    //pull funds and issue shares
-                    _invest(transaction.valueOrShares);
+                if (!transaction.isInflow) {
+                    //if pending fees are zero then isPendingUncrystalised will false
+                    if (fundState.pendingPerfFees != 0) {
+                        _withdraw(transaction.valueOrShares, true);
+                    } else {
+                        _withdraw(transaction.valueOrShares, false);
+                    }
                 } else {
-                    //burn shares and send funds
-                    _withdraw(transaction.valueOrShares);
+                    _invest(transaction.valueOrShares);
                 }
-                // Clear the investor's transaction queue
                 delete transactionQueue[investor];
             }
         }
     }
 
-    //@audit make this and other internal functions nonreentrant
+    //@audit potentially make this and other internal functions nonreentrant
     function _invest(uint256 _amount) internal {
         require(_amount > 0, "Invest <= 0");
         // require(block.timestamp - fundState.lastValuationTime <= 1 hours, "stale valuation");
@@ -187,25 +236,74 @@ contract FundModule is Module, ERC20 {
         emit Invested(address(baseAsset), msg.sender, block.timestamp, _amount, newShares);
     }
 
-    function _withdraw(uint256 _shares) internal {
-        // require(block.timestamp - fundState.lastValuationTime <= 1 hours, "stale valuation");
+    //@audit left off here. This withdraw func assumes pending perf fees are due which may not be the case as they could be zero from meeting crystalisation period.
+    //add a bool isPendingUncrystalised that is caught in an if that gives correct netPayout etc in both cases
+    function _withdraw(uint256 _shares, bool isPendingUncrystalised) internal {
         require(balanceOf(msg.sender) >= _shares, "insufficient shares");
-        uint256 payout = _shares * fundState.sharePrice * 10 ** (baseAsset.decimals()) / 1 ether / 1 ether;
-        _burn(msg.sender, _shares); //burn shares first before exec for reentrancy safety
-        fundState.totalAssets = fundState.totalAssets - (payout * 1 ether / 10 ** (baseAsset.decimals()));
+        uint256 grossPayout = _shares * fundState.sharePrice * 10 ** (baseAsset.decimals()) / 1 ether / 1 ether;
+
+        //we need to deduct perfomance fees that may not have been crystalised yet before an investor leaves the fund
+        uint256 netPayout;
+        if (isPendingUncrystalised) {
+            uint256 crystalisedShareOfFees = _shares * fundState.pendingPerfFees / totalSupply() / 1 ether; //@todo fix weimath here - also could there be a case of zero total supply?
+            netPayout = grossPayout - crystalisedShareOfFees;
+            fundState.pendingPerfFees -= crystalisedShareOfFees;
+            _pay(manager, crystalisedShareOfFees);
+        } else {
+            //here no perf fee is due
+            netPayout = grossPayout;
+        }
+        //burn shares first before exec for reentrancy safety
+        _burn(msg.sender, _shares);
+        fundState.totalAssets = fundState.totalAssets - (grossPayout * 1 ether / 10 ** (baseAsset.decimals())); //note that we use grossPayout here as this is the investor assets and fees that leave the fund
         //if total supply is 0 because of a full withdrawal we will get div 0 error without this
         if (totalSupply() != 0) {
             fundState.sharePrice = fundState.totalAssets * (1 ether) / totalSupply();
         } else {
             fundState.sharePrice = 1 ether;
         }
+        _pay(msg.sender, netPayout);
+        emit Withdrawn(address(baseAsset), msg.sender, block.timestamp, netPayout, _shares);
+    }
+
+    function _calculatePendingAumFee() internal {
+        uint256 aumFeeAmount = fundState.totalAssets
+            * (fundState.aumFeeRatePerSecond * (block.timestamp - fundState.lastAumFeeCalcTime)) / 1 ether;
+        fundState.pendingAumFees += aumFeeAmount;
+        fundState.lastAumFeeCalcTime = block.timestamp;
+    }
+
+    function _calculatePendingPerfFee() internal {
+        //True implies perf fee and aum fee due, false means only aum fee due
+        if (fundState.sharePrice > fundState.highWaterMark) {
+            uint256 perfFeeAmount =
+                (fundState.sharePrice - fundState.highWaterMark) * totalSupply() * fundState.perfFeeRate / 1e18;
+            fundState.highWaterMark = fundState.sharePrice;
+            fundState.lastAumFeeCalcTime = block.timestamp; //this may be useful for crystalisation down the line
+            fundState.pendingPerfFees += perfFeeAmount;
+        } else {
+            //@audit add logic for where the performance has been lost and shareprice has fallen below hwm
+        }
+    }
+
+    function _pay(address to, uint256 amount) internal {
         exec(
-            address(baseAsset),
-            0,
-            abi.encodeWithSelector(baseAsset.transfer.selector, msg.sender, payout),
-            Enum.Operation.Call
+            address(baseAsset), 0, abi.encodeWithSelector(baseAsset.transfer.selector, to, amount), Enum.Operation.Call
         );
-        emit Withdrawn(address(baseAsset), msg.sender, block.timestamp, payout, _shares);
+    }
+
+    function _payoutAumFees() internal {
+        uint256 feesDue = fundState.pendingAumFees;
+        fundState.totalAssets -= feesDue;
+        fundState.pendingAumFees = 0;
+        _pay(manager, feesDue);
+    }
+
+    function _payoutPerfFees() internal {
+        uint256 feesDue = fundState.pendingPerfFees;
+        fundState.totalAssets -= feesDue;
+        fundState.pendingPerfFees = 0;
+        _pay(manager, feesDue);
     }
 
     //Can price the whole fund manually
