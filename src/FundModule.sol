@@ -171,6 +171,7 @@ contract FundModule is Module, ERC20 {
     //Allows investors queue actions to invest
     function queueInvestment(uint256 _amount) public onlyWhitelisted {
         require(_amount > 0, "invest <= 0");
+        console.log("base asset of inv:", baseAsset.balanceOf(msg.sender));
         require(baseAsset.balanceOf(msg.sender) >= _amount, "Insufficient baseAsset");
         require(transactionQueue[msg.sender].investor == address(0), "investor already in queue");
         transactionQueue[msg.sender] = PendingTransaction(msg.sender, _amount, true);
@@ -213,7 +214,7 @@ contract FundModule is Module, ERC20 {
             PendingTransaction memory transaction = transactionQueue[investor];
             //empty struct default value is the zero for that type so here we are basically checking transaction is not empty
             if (transaction.investor != address(0)) {
-                //transaction is a withdrawal
+                //     //transaction is a withdrawal
                 if (!transaction.isInflow) {
                     //if pending fees are zero then isPendingUncrystalised will false as all fees would be paid up already
                     //@todo is isPendingUncrystalised bool necessary? maybe the zero value if fees paid up won't cause issues with withdraw
