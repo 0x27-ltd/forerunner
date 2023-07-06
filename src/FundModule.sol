@@ -194,6 +194,7 @@ contract FundModule is Module, ERC20 {
     }
 
     //Fund admin calls this to price the fund, and subsequent actions can be processed like investments, withdrawals and fee payments.
+    //@audit fixme - Investors can grief this heavily by queueing an invest and removing the approval before updateStateWithPrice called making this whole thing fail
     function updateStateWithPrice(uint256 netAssetValue) public onlyAccountant {
         //value fund so shares can be accurately issued and burnt
         _customValuation(netAssetValue);
@@ -219,13 +220,13 @@ contract FundModule is Module, ERC20 {
                     //if pending fees are zero then isPendingUncrystalised will false as all fees would be paid up already
                     //@todo is isPendingUncrystalised bool necessary? maybe the zero value if fees paid up won't cause issues with withdraw
                     if (fundState.pendingPerfFees != 0) {
-                        _withdraw(transaction.valueOrShares, true);
+                        _withdraw(transaction.investor, transaction.valueOrShares, true);
                     } else {
-                        _withdraw(transaction.valueOrShares, false);
+                        _withdraw(transaction.investor, transaction.valueOrShares, false);
                     }
                     //transaction is an investment
                 } else {
-                    _invest(transaction.valueOrShares);
+                    _invest(transaction.investor, transaction.valueOrShares);
                 }
                 delete transactionQueue[investor];
             }
@@ -233,10 +234,10 @@ contract FundModule is Module, ERC20 {
     }
 
     //Process the investment action, to be called when processing transaction queue
-    function _invest(uint256 _amount) internal {
+    function _invest(address _investor, uint256 _amount) internal {
         require(_amount > 0, "Invest <= 0");
-        require(baseAsset.balanceOf(msg.sender) >= _amount, "Insufficient baseAsset");
-        baseAsset.transferFrom(msg.sender, this.avatar(), _amount);
+        require(baseAsset.balanceOf(_investor) >= _amount, "Insufficient baseAsset");
+        baseAsset.transferFrom(_investor, this.avatar(), _amount);
         // Share issuance formula:
         // s = i/(i+a) * (t + s) simplifies to s = it/a
         //@todo does newShares bug out if we start a fund with 18 decimals?
@@ -249,18 +250,18 @@ contract FundModule is Module, ERC20 {
         }
         // if the investor does not have any shares, add them to the array
         //@todo oof just remembered that this wouldnt work because if we allow transfer() to work between EOAs & smart wallets, this logic would fail
-        if (balanceOf(msg.sender) == 0) {
+        if (balanceOf(_investor) == 0) {
             investorLimits.addInvestor();
         }
-        _mint(msg.sender, newShares);
+        _mint(_investor, newShares);
         fundState.totalAssets += _amount;
         fundState.sharePrice = fundState.totalAssets * (1 ether) / totalSupply();
-        emit Invested(address(baseAsset), msg.sender, block.timestamp, _amount, newShares);
+        emit Invested(address(baseAsset), _investor, block.timestamp, _amount, newShares);
     }
 
     //Process the withdraw action, to be called when processing the transaction queue
-    function _withdraw(uint256 _shares, bool isPendingUncrystalised) internal {
-        require(balanceOf(msg.sender) >= _shares, "insufficient shares");
+    function _withdraw(address _investor, uint256 _shares, bool isPendingUncrystalised) internal {
+        require(balanceOf(_investor) >= _shares, "insufficient shares");
         //Investors share of assets
         uint256 grossPayout = _shares * fundState.sharePrice * 10 ** (baseAsset.decimals()) / 1 ether / 1 ether;
         //we need to deduct perfomance fees that may not have been crystalised yet before an investor leaves the fund. Without this manager gets screwed.
@@ -276,9 +277,9 @@ contract FundModule is Module, ERC20 {
             //here no perf fee is due
             netPayout = grossPayout;
         }
-        _burn(msg.sender, _shares);
+        _burn(_investor, _shares);
         // if the investor does not have any shares, remove them to the array
-        if (balanceOf(msg.sender) == 0) {
+        if (balanceOf(_investor) == 0) {
             investorLimits.removeInvestor();
         }
         fundState.totalAssets = fundState.totalAssets - (grossPayout * 1 ether / 10 ** (baseAsset.decimals()));
@@ -288,7 +289,7 @@ contract FundModule is Module, ERC20 {
         } else {
             fundState.sharePrice = 1 ether;
         }
-        _pay(msg.sender, netPayout);
+        _pay(_investor, netPayout);
         emit Withdrawn(address(baseAsset), msg.sender, block.timestamp, netPayout, _shares);
     }
 
