@@ -33,11 +33,11 @@ contract FundModule is Module, ERC20 {
     }
 
     //map an investor's addy to their PendingTransaction
-    mapping(address => PendingTransaction) private transactionQueue;
+    mapping(address => PendingTransaction) private _transactionQueue;
 
     //kyc whitelist
     mapping(address => bool) public whitelist;
-    address[] private whitelistAddresses;
+    address[] private _whitelistAddresses;
     address public manager;
     address public accountant;
     FundState public fundState;
@@ -134,7 +134,7 @@ contract FundModule is Module, ERC20 {
         require(_address != address(0), "!address");
         require(!whitelist[_address], "address already in the whitelist");
         whitelist[_address] = true;
-        whitelistAddresses.push(_address);
+        _whitelistAddresses.push(_address);
         emit ModifiedWhitelist(_address, block.timestamp, true);
     }
 
@@ -142,19 +142,19 @@ contract FundModule is Module, ERC20 {
     function removeFromWhitelist(address _address) public onlyAccountant {
         require(_address != address(0), "!address");
         whitelist[_address] = false;
-        //Need to remove addy from whitelistAddresses array too
+        //Need to remove addy from _whitelistAddresses array too
         uint256 indexToRemove = 0;
-        for (uint256 i = 0; i < whitelistAddresses.length; i++) {
-            if (whitelistAddresses[i] == _address) {
+        for (uint256 i = 0; i < _whitelistAddresses.length; i++) {
+            if (_whitelistAddresses[i] == _address) {
                 indexToRemove = i;
                 break;
             }
         }
         //If the address is found in the array, remove it by swapping with the last element and then reducing the array length
-        if (indexToRemove < whitelistAddresses.length - 1) {
-            whitelistAddresses[indexToRemove] = whitelistAddresses[whitelistAddresses.length - 1];
+        if (indexToRemove < _whitelistAddresses.length - 1) {
+            _whitelistAddresses[indexToRemove] = _whitelistAddresses[_whitelistAddresses.length - 1];
         }
-        whitelistAddresses.pop();
+        _whitelistAddresses.pop();
         emit ModifiedWhitelist(_address, block.timestamp, false);
     }
 
@@ -178,23 +178,23 @@ contract FundModule is Module, ERC20 {
         require(_amount > 0, "invest <= 0");
         console.log("base asset of inv:", baseAsset.balanceOf(msg.sender));
         require(baseAsset.balanceOf(msg.sender) >= _amount, "Insufficient baseAsset");
-        require(transactionQueue[msg.sender].investor == address(0), "investor already in queue");
-        transactionQueue[msg.sender] = PendingTransaction(msg.sender, _amount, true);
+        require(_transactionQueue[msg.sender].investor == address(0), "investor already in queue");
+        _transactionQueue[msg.sender] = PendingTransaction(msg.sender, _amount, true);
     }
 
     //Allows investors queue actions to withdraw
     function queueWithdrawal(uint256 _shares) public onlyWhitelisted {
         require(_shares > 0, "shares <= 0");
         require(balanceOf(msg.sender) >= _shares, "insufficient shares");
-        require(transactionQueue[msg.sender].investor == address(0), "investor already in queue");
-        transactionQueue[msg.sender] = PendingTransaction(msg.sender, _shares, false);
+        require(_transactionQueue[msg.sender].investor == address(0), "investor already in queue");
+        _transactionQueue[msg.sender] = PendingTransaction(msg.sender, _shares, false);
     }
 
     //Allows investors to cancel a previously queuedAction
     function cancelQueuedAction() public onlyWhitelisted {
-        PendingTransaction memory transaction = transactionQueue[msg.sender];
+        PendingTransaction memory transaction = _transactionQueue[msg.sender];
         if (transaction.investor != address(0)) {
-            delete transactionQueue[msg.sender];
+            delete _transactionQueue[msg.sender];
         }
     }
 
@@ -215,9 +215,9 @@ contract FundModule is Module, ERC20 {
             _payoutAumFees();
         }
         //@todo Do we need to process withdrawals first before we process investments? worried about inaccurate share issuance if we don't do it seperatley [verify this!]
-        for (uint256 i = 0; i < whitelistAddresses.length; i++) {
-            address investor = whitelistAddresses[i];
-            PendingTransaction memory transaction = transactionQueue[investor];
+        for (uint256 i = 0; i < _whitelistAddresses.length; i++) {
+            address investor = _whitelistAddresses[i];
+            PendingTransaction memory transaction = _transactionQueue[investor];
             //empty struct default value is the zero for that type so here we are basically checking transaction is not empty
             if (transaction.investor != address(0)) {
                 //     //transaction is a withdrawal
@@ -233,7 +233,7 @@ contract FundModule is Module, ERC20 {
                 } else {
                     _invest(transaction.investor, transaction.valueOrShares);
                 }
-                delete transactionQueue[investor];
+                delete _transactionQueue[investor];
             }
         }
     }
