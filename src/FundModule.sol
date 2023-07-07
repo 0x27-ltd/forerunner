@@ -7,6 +7,8 @@ import "zodiac/core/Module.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "forge-std/console.sol";
 import "./IInvestorLimits.sol";
+import "./compliance/IModularCompliance.sol";
+// import "./IFundModule.sol";
 
 contract FundModule is Module, ERC20 {
     struct FundState {
@@ -42,6 +44,7 @@ contract FundModule is Module, ERC20 {
     IERC20Metadata public baseAsset;
     address[] private _investors;
     IInvestorLimits public investorLimits;
+    IModularCompliance internal _tokenCompliance;
 
     event ModifiedWhitelist(address indexed investor, uint256 timestamp, bool isWhitelisted);
     event Invested(
@@ -51,6 +54,8 @@ contract FundModule is Module, ERC20 {
         address indexed baseAsset, address indexed investor, uint256 timestamp, uint256 amount, uint256 shares
     );
     event Priced(uint256 totalAssets, uint256 sharePrice, uint256 timestamp);
+
+    event ComplianceAdded(address indexed _compliance);
 
     constructor(
         string memory _name,
@@ -374,4 +379,24 @@ contract FundModule is Module, ERC20 {
     function getFundState() public view returns (FundState memory) {
         return fundState;
     }
+
+
+    /**
+     *  @dev See {IToken-compliance}.
+     */
+    function compliance() external view returns (IModularCompliance) {
+        return _tokenCompliance;
+    }
+    /**
+     *  @dev See {IToken-setCompliance}.
+     */
+    function setCompliance(address _compliance) public onlyOwner {
+        if (address(_tokenCompliance) != address(0)) {
+            _tokenCompliance.unbindToken(address(this));
+        }
+        _tokenCompliance = IModularCompliance(_compliance);
+        _tokenCompliance.bindToken(address(this));
+        emit ComplianceAdded(_compliance);
+    }
+
 }
