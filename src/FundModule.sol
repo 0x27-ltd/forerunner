@@ -36,9 +36,6 @@ contract FundModule is Module, ERC20, WhitelistManager {
     //map an investor's addy to their PendingTransaction
     mapping(address => PendingTransaction) private _transactionQueue;
 
-    //kyc whitelist
-    // mapping(address => bool) public whitelist;
-    // address[] private _whitelistAddresses;
     address public manager;
     address public accountant;
     FundState public fundState;
@@ -70,7 +67,7 @@ contract FundModule is Module, ERC20, WhitelistManager {
         uint256 _perfFeeRate,
         uint256 _crystalisationPeriod,
         address _investorLimits
-    ) ERC20(_name, _symbol) {
+    ) ERC20(_name, _symbol) WhitelistManager(_accountant) {
         bytes memory initializeParams = abi.encode(
             _manager, _accountant, _fundSafe, _baseAsset, _aumFeeRatePerSecond, _perfFeeRate, _crystalisationPeriod
         );

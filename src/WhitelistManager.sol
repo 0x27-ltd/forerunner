@@ -8,8 +8,10 @@ contract WhitelistManager {
 
     event ModifiedWhitelist(address indexed investor, uint256 timestamp, bool isWhitelisted);
 
-    constructor(){
-
+    constructor(
+        address _controller
+    ){
+        _whitelistController = _controller;
     }
 
     // only the accountant is the controller
@@ -22,7 +24,7 @@ contract WhitelistManager {
         require(whitelist[msg.sender] == true, "Caller is not whitelisted.");
         _;
     }
-    
+
     //Add a kyc'd investors address to the investor whitelist. The fund admin does this only after off-chain kyc completed
     function addToWhitelist(address _address) public whitelistController {
         require(_address != address(0), "!address");
