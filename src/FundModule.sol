@@ -7,10 +7,11 @@ import "zodiac/core/Module.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "forge-std/console.sol";
 import "./IInvestorLimits.sol";
+import "./WhitelistManager.sol";
 import "./compliance/IModularCompliance.sol";
 // import "./IFundModule.sol";
 
-contract FundModule is Module, ERC20 {
+contract FundModule is Module, ERC20, WhitelistManager {
     struct FundState {
         uint256 totalAssets; //NAV of fund
         uint256 sharePrice; //Price per share of fund
@@ -36,17 +37,18 @@ contract FundModule is Module, ERC20 {
     mapping(address => PendingTransaction) private _transactionQueue;
 
     //kyc whitelist
-    mapping(address => bool) public whitelist;
-    address[] private _whitelistAddresses;
+    // mapping(address => bool) public whitelist;
+    // address[] private _whitelistAddresses;
     address public manager;
     address public accountant;
     FundState public fundState;
     IERC20Metadata public baseAsset;
     address[] private _investors;
     IInvestorLimits public investorLimits;
+
     IModularCompliance internal _tokenCompliance;
 
-    event ModifiedWhitelist(address indexed investor, uint256 timestamp, bool isWhitelisted);
+    // event ModifiedWhitelist(address indexed investor, uint256 timestamp, bool isWhitelisted);
     event Invested(
         address indexed baseAsset, address indexed investor, uint256 timestamp, uint256 amount, uint256 shares
     );
@@ -129,42 +131,8 @@ contract FundModule is Module, ERC20 {
         return super._msgData();
     }
 
-    //Add a kyc'd investors address to the investor whitelist. The fund admin does this only after off-chain kyc completed
-    function addToWhitelist(address _address) public onlyAccountant {
-        require(_address != address(0), "!address");
-        require(!whitelist[_address], "address already in the whitelist");
-        whitelist[_address] = true;
-        _whitelistAddresses.push(_address);
-        emit ModifiedWhitelist(_address, block.timestamp, true);
-    }
-
-    // Remove an address from the kyc whitelist
-    function removeFromWhitelist(address _address) public onlyAccountant {
-        require(_address != address(0), "!address");
-        whitelist[_address] = false;
-        //Need to remove addy from _whitelistAddresses array too
-        uint256 indexToRemove = 0;
-        for (uint256 i = 0; i < _whitelistAddresses.length; i++) {
-            if (_whitelistAddresses[i] == _address) {
-                indexToRemove = i;
-                break;
-            }
-        }
-        //If the address is found in the array, remove it by swapping with the last element and then reducing the array length
-        if (indexToRemove < _whitelistAddresses.length - 1) {
-            _whitelistAddresses[indexToRemove] = _whitelistAddresses[_whitelistAddresses.length - 1];
-        }
-        _whitelistAddresses.pop();
-        emit ModifiedWhitelist(_address, block.timestamp, false);
-    }
-
     modifier onlyManager() {
         require(msg.sender == manager, "Only the manager can call this function.");
-        _;
-    }
-
-    modifier onlyWhitelisted() {
-        require(whitelist[msg.sender] == true, "Caller is not whitelisted.");
         _;
     }
 
