@@ -2,16 +2,17 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "zodiac/core/Module.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "forge-std/console.sol";
 import "./IInvestorLimits.sol";
 import "./WhitelistManager.sol";
+import "./FundToken.sol";
 import "./compliance/IModularCompliance.sol";
 // import "./IFundModule.sol";
 
-contract FundModule is Module, ERC20, WhitelistManager {
+contract FundModule is Module, FundToken, WhitelistManager {
     struct FundState {
         uint256 totalAssets; //NAV of fund
         uint256 sharePrice; //Price per share of fund
@@ -43,8 +44,6 @@ contract FundModule is Module, ERC20, WhitelistManager {
     address[] private _investors;
     IInvestorLimits public investorLimits;
 
-    IModularCompliance internal _tokenCompliance;
-
     // event ModifiedWhitelist(address indexed investor, uint256 timestamp, bool isWhitelisted);
     event Invested(
         address indexed baseAsset, address indexed investor, uint256 timestamp, uint256 amount, uint256 shares
@@ -67,7 +66,7 @@ contract FundModule is Module, ERC20, WhitelistManager {
         uint256 _perfFeeRate,
         uint256 _crystalisationPeriod,
         address _investorLimits
-    ) ERC20(_name, _symbol) WhitelistManager(_accountant) {
+    ) FundToken(_name, _symbol) WhitelistManager(_accountant) {
         bytes memory initializeParams = abi.encode(
             _manager, _accountant, _fundSafe, _baseAsset, _aumFeeRatePerSecond, _perfFeeRate, _crystalisationPeriod
         );
@@ -223,7 +222,7 @@ contract FundModule is Module, ERC20, WhitelistManager {
         if (balanceOf(_investor) == 0) {
             investorLimits.addInvestor();
         }
-        _mint(_investor, newShares);
+        mint(_investor, newShares);
         fundState.totalAssets += _amount;
         fundState.sharePrice = fundState.totalAssets * (1 ether) / totalSupply();
         emit Invested(address(baseAsset), _investor, block.timestamp, _amount, newShares);
@@ -247,7 +246,7 @@ contract FundModule is Module, ERC20, WhitelistManager {
             //here no perf fee is due
             netPayout = grossPayout;
         }
-        _burn(_investor, _shares);
+        burn(_investor, _shares);
         // if the investor does not have any shares, remove them to the array
         if (balanceOf(_investor) == 0) {
             investorLimits.removeInvestor();
