@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "zodiac/core/Module.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "forge-std/console.sol";
-import "./IInvestorLimits.sol";
 import "./WhitelistManager.sol";
 import "./FundToken.sol";
 import "./compliance/IModularCompliance.sol";
@@ -42,7 +41,6 @@ contract FundModule is Module, FundToken, WhitelistManager {
     FundState public fundState;
     IERC20Metadata public baseAsset;
     address[] private _investors;
-    IInvestorLimits public investorLimits;
 
     // event ModifiedWhitelist(address indexed investor, uint256 timestamp, bool isWhitelisted);
     event Invested(
@@ -64,21 +62,19 @@ contract FundModule is Module, FundToken, WhitelistManager {
         address _baseAsset,
         uint256 _aumFeeRatePerSecond,
         uint256 _perfFeeRate,
-        uint256 _crystalisationPeriod,
-        address _investorLimits
+        uint256 _crystalisationPeriod
     ) FundToken(_name, _symbol) WhitelistManager(_accountant) {
         bytes memory initializeParams = abi.encode(
             _manager, _accountant, _fundSafe, _baseAsset, _aumFeeRatePerSecond, _perfFeeRate, _crystalisationPeriod
         );
         setUp(initializeParams);
-        investorLimits = IInvestorLimits(_investorLimits);
     }
 
     /// @dev Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
     function setUp(bytes memory initializeParams) public virtual override initializer {
         //This func is needed for modules as they are minimal proxies pointing to a master copy so its like a constructor work around
-        __Ownable_init();
+        // __Ownable_init();
         (
             address _manager,
             address _accountant,
@@ -217,11 +213,6 @@ contract FundModule is Module, FundToken, WhitelistManager {
         if (totalSupply() != 0) {
             newShares = (_amount * totalSupply() / (1 ether)) * (1 ether) / fundState.totalAssets;
         }
-        // if the investor does not have any shares, add them to the array
-        //@todo oof just remembered that this wouldnt work because if we allow transfer() to work between EOAs & smart wallets, this logic would fail
-        if (balanceOf(_investor) == 0) {
-            investorLimits.addInvestor();
-        }
         mint(_investor, newShares);
         fundState.totalAssets += _amount;
         fundState.sharePrice = fundState.totalAssets * (1 ether) / totalSupply();
@@ -247,10 +238,6 @@ contract FundModule is Module, FundToken, WhitelistManager {
             netPayout = grossPayout;
         }
         burn(_investor, _shares);
-        // if the investor does not have any shares, remove them to the array
-        if (balanceOf(_investor) == 0) {
-            investorLimits.removeInvestor();
-        }
         fundState.totalAssets = fundState.totalAssets - (grossPayout * 1 ether / 10 ** (baseAsset.decimals()));
         //if total supply is 0 because of a full withdrawal we will get div 0 error without this
         if (totalSupply() != 0) {
@@ -344,7 +331,6 @@ contract FundModule is Module, FundToken, WhitelistManager {
         return fundState;
     }
 
-
     /**
      *  @dev See {IToken-compliance}.
      */
@@ -354,6 +340,7 @@ contract FundModule is Module, FundToken, WhitelistManager {
     /**
      *  @dev See {IToken-setCompliance}.
      */
+
     function setCompliance(address _compliance) public onlyOwner {
         if (address(_tokenCompliance) != address(0)) {
             _tokenCompliance.unbindToken(address(this));
@@ -362,5 +349,4 @@ contract FundModule is Module, FundToken, WhitelistManager {
         _tokenCompliance.bindToken(address(this));
         emit ComplianceAdded(_compliance);
     }
-
 }
