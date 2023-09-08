@@ -42,12 +42,13 @@ abstract contract Modifier is Module, IAvatar {
     /// @param value Ether value of module transaction.
     /// @param data Data payload of module transaction.
     /// @param operation Operation type of module transaction.
-    function execTransactionFromModule(
-        address to,
-        uint256 value,
-        bytes calldata data,
-        Enum.Operation operation
-    ) public virtual override moduleOnly returns (bool success) {}
+    function execTransactionFromModule(address to, uint256 value, bytes calldata data, Enum.Operation operation)
+        public
+        virtual
+        override
+        moduleOnly
+        returns (bool success)
+    {}
 
     /// @dev Passes a transaction to the modifier, expects return data.
     /// @notice Can only be called by enabled modules.
@@ -60,13 +61,7 @@ abstract contract Modifier is Module, IAvatar {
         uint256 value,
         bytes calldata data,
         Enum.Operation operation
-    )
-        public
-        virtual
-        override
-        moduleOnly
-        returns (bool success, bytes memory returnData)
-    {}
+    ) public virtual override moduleOnly returns (bool success, bytes memory returnData) {}
 
     /*
     --------------------------------------------------
@@ -81,12 +76,10 @@ abstract contract Modifier is Module, IAvatar {
     /// @notice This can only be called by the owner.
     /// @param prevModule Module that pointed to the module to be removed in the linked list.
     /// @param module Module to be removed.
-    function disableModule(
-        address prevModule,
-        address module
-    ) public override onlyOwner {
-        if (module == address(0) || module == SENTINEL_MODULES)
+    function disableModule(address prevModule, address module) public override onlyOwner {
+        if (module == address(0) || module == SENTINEL_MODULES) {
             revert InvalidModule(module);
+        }
         if (modules[prevModule] != module) revert AlreadyDisabledModule(module);
         modules[prevModule] = modules[module];
         modules[module] = address(0);
@@ -97,8 +90,9 @@ abstract contract Modifier is Module, IAvatar {
     /// @param module Address of the module to be enabled
     /// @notice This can only be called by the owner
     function enableModule(address module) public override onlyOwner {
-        if (module == address(0) || module == SENTINEL_MODULES)
+        if (module == address(0) || module == SENTINEL_MODULES) {
             revert InvalidModule(module);
+        }
         if (modules[module] != address(0)) revert AlreadyEnabledModule(module);
         modules[module] = modules[SENTINEL_MODULES];
         modules[SENTINEL_MODULES] = module;
@@ -107,9 +101,7 @@ abstract contract Modifier is Module, IAvatar {
 
     /// @dev Returns if an module is enabled
     /// @return True if the module is enabled
-    function isModuleEnabled(
-        address _module
-    ) public view override returns (bool) {
+    function isModuleEnabled(address _module) public view override returns (bool) {
         return SENTINEL_MODULES != _module && modules[_module] != address(0);
     }
 
@@ -120,10 +112,12 @@ abstract contract Modifier is Module, IAvatar {
     /// @param pageSize Maximum number of modules that should be returned. Has to be > 0
     /// @return array Array of modules.
     /// @return next Start of the next page.
-    function getModulesPaginated(
-        address start,
-        uint256 pageSize
-    ) external view override returns (address[] memory array, address next) {
+    function getModulesPaginated(address start, uint256 pageSize)
+        external
+        view
+        override
+        returns (address[] memory array, address next)
+    {
         if (start != SENTINEL_MODULES && !isModuleEnabled(start)) {
             revert InvalidModule(start);
         }
@@ -137,11 +131,7 @@ abstract contract Modifier is Module, IAvatar {
         // Populate return array
         uint256 moduleCount = 0;
         next = modules[start];
-        while (
-            next != address(0) &&
-            next != SENTINEL_MODULES &&
-            moduleCount < pageSize
-        ) {
+        while (next != address(0) && next != SENTINEL_MODULES && moduleCount < pageSize) {
             array[moduleCount] = next;
             next = modules[next];
             moduleCount++;
@@ -166,9 +156,10 @@ abstract contract Modifier is Module, IAvatar {
 
     /// @dev Initializes the modules linked list.
     /// @notice Should be called as part of the `setUp` / initializing function and can only be called once.
-    function setupModules() internal {
-        if (modules[SENTINEL_MODULES] != address(0))
+    function setupModules() internal virtual {
+        if (modules[SENTINEL_MODULES] != address(0)) {
             revert SetupModulesAlreadyCalled();
+        }
         modules[SENTINEL_MODULES] = SENTINEL_MODULES;
     }
 }
