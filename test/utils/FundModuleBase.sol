@@ -9,6 +9,7 @@ import "forge-std/console.sol";
 import "forge-std/console2.sol";
 import "forge-std/Test.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "zodiac-modifier-roles/Roles.sol";
 import "../../src/ERC20Decimal.sol";
 // import "forge-std/StdInvariant.sol";
 // import "@solmate/utils/FixedPointMathLib.sol"; //PRBMath also an option
@@ -26,7 +27,7 @@ contract FundModuleBase is Test {
     uint256 public constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
     uint8 public decimals = 6;
 
-    function setUp() public virtual {
+    function setUp() public virtual returns (FundModule, MockSafe) {
         safe = new MockSafe();
         mockUsdc = new ERC20Decimal("USD Coin", "USDC", decimals);
         manager = vm.addr(1);
@@ -50,7 +51,10 @@ contract FundModuleBase is Test {
         safe.enableModule(address(fundModule));
         //when StdInvariant is in use for stateful fuzz testing we need to define the target contract that will have its functions called
         // targetContract(address(fundModule));
+        return (fundModule, safe);
     }
+
+    function deployRoles(MockSafe safe) internal {}
 
     function getMockUsdc(address _investor, uint256 _amount) public {
         //vm.deal with 4 params not working here so importing StdCheats as a work around

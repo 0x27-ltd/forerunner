@@ -12,11 +12,12 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../src/ERC20Decimal.sol";
 import "./utils/FundModuleBase.sol";
 // import "@solmate/utils/FixedPointMathLib.sol"; //PRBMath also an option
+import "forge-std/console.sol";
 
 //run with verbosity (-v -> -vvvvv): forge test -vv
 //run specific test contract: forge test -vv --match-contract ModuleTest
 
-contract FundModuleTest is FundModuleBase {
+contract LimitInvestorTest is FundModuleBase {
     function setUp() public virtual override returns (FundModule, MockSafe) {
         (fundModule, safe) = FundModuleBase.setUp();
     }
