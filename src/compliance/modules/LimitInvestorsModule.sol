@@ -9,10 +9,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  *  this module allows to require the pre-validation of a transfer before allowing it to be executed
  */
 contract LimitInvestorsModule is AbstractModule {
-
     /// Mapping between transfer details and their approval status (amount of transfers approved) per compliance
     // mapping(address => mapping(bytes32 => uint)) private _transfersApproved;
-    mapping(address => uint256) private _investor;
+    mapping(address => uint256) private _investors;
     mapping(address => uint8) private _maxInvestors;
     // uint256 public _investors;
     // uint8 public maxInvestors;
@@ -22,16 +21,12 @@ contract LimitInvestorsModule is AbstractModule {
      *  transfer approval is removed post-transfer if it was pre-approved
      *  the check on whether the transfer was pre-approved or not here is to allow forced transfers to bypass the module
      */
-    function moduleTransferAction(
-        address _from,
-        address _to,
-        uint256 _value)
-    external override onlyComplianceCall {
+    function moduleTransferAction(address _from, address _to, uint256 _value) external override onlyComplianceCall {
         uint256 toBalance = IERC20(IModularCompliance(msg.sender).getTokenBound()).balanceOf(_to);
         uint256 fromBalance = IERC20(IModularCompliance(msg.sender).getTokenBound()).balanceOf(_from);
-        if (toBalance > 0){
-            _investor
-        }
+        // if (toBalance > 0){
+        //     _investor
+        // }
     }
 
     /**
@@ -56,12 +51,12 @@ contract LimitInvestorsModule is AbstractModule {
      *  @dev See {IModule-moduleCheck}.
      *  checks if the transfer is approved or not
      */
-    function moduleCheck(
-        address /*_from*/,
-        address /*_to*/,
-        uint256 /*_value*/,
-        address _compliance
-    ) external view override returns (bool) {
+    function moduleCheck(address, /*_from*/ address, /*_to*/ uint256, /*_value*/ address _compliance)
+        external
+        view
+        override
+        returns (bool)
+    {
         return isLimitReached(_compliance);
     }
 
@@ -71,7 +66,7 @@ contract LimitInvestorsModule is AbstractModule {
      *  requires `_compliance` to be bound to this module
      */
     function isLimitReached(address _compliance) public view returns (bool) {
-        if (((_investors[_compliance])) >= _maxInvestors[_compliance]) {
+        if (_investors[_compliance] >= _maxInvestors[_compliance]) {
             return true;
         }
         return false;
@@ -85,12 +80,11 @@ contract LimitInvestorsModule is AbstractModule {
      *  @param _token the address of the token that would be transferred
      *  returns the transferId of the transfer
      */
-    function calculateTransferHash (
-        address _from,
-        address _to,
-        uint _amount,
-        address _token
-    ) public pure returns (bytes32){
+    function calculateTransferHash(address _from, address _to, uint256 _amount, address _token)
+        public
+        pure
+        returns (bytes32)
+    {
         bytes32 transferHash = keccak256(abi.encode(_from, _to, _amount, _token));
         return transferHash;
     }
