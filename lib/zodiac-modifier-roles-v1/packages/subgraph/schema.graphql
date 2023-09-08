@@ -1,0 +1,83 @@
+enum ExecutionOptions {
+  None
+  Send
+  DelegateCall
+  Both
+}
+
+enum Clearance {
+  None
+  Target
+  Function
+}
+
+enum ParameterType {
+  Static
+  Dynamic
+  Dynamic32
+}
+
+enum ParameterComparison {
+  EqualTo
+  GreaterThan
+  LessThan
+  OneOf
+}
+
+type Role @entity {
+  id: ID! # Global unique id for role in subgraph
+  name: String!
+  rolesModifier: RolesModifier!
+  roleIdInContract: Int! # The role id used to represent this role in context of the role's rolesModifier
+  targets: [Target!] @derivedFrom(field: "role")
+  members: [RoleAssignment!] @derivedFrom(field: "role")
+}
+
+type Target @entity {
+  id: ID!
+  role: Role!
+  address: Bytes!
+  clearance: Clearance!
+  executionOptions: ExecutionOptions!
+  functions: [Function!] @derivedFrom(field: "target")
+}
+
+type Function @entity {
+  id: ID!
+  target: Target
+  sighash: Bytes!
+  executionOptions: ExecutionOptions!
+  wildcarded: Boolean!
+  parameters: [Parameter!] @derivedFrom(field: "owningFunction")
+}
+
+type Parameter @entity {
+  id: ID!
+  owningFunction: Function!
+  index: Int!
+  type: ParameterType!
+  comparison: ParameterComparison!
+  comparisonValue: [Bytes!]! # Will contain only one value except for oneOf where is an array
+}
+
+type Member @entity {
+  id: ID!
+  address: Bytes!
+  enabledAsModule: Boolean!
+  roles: [RoleAssignment!] @derivedFrom(field: "member")
+}
+
+type RoleAssignment @entity {
+  id: ID!
+  member: Member!
+  role: Role!
+}
+
+type RolesModifier @entity {
+  id: ID!
+  address: Bytes!
+  owner: Bytes!
+  avatar: Bytes!
+  target: Bytes!
+  roles: [Role!] @derivedFrom(field: "rolesModifier")
+}
