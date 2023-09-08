@@ -12,12 +12,7 @@ contract Roles is Modifier {
 
     event AssignRoles(address module, uint16[] roles, bool[] memberOf);
     event SetMultisendAddress(address multisendAddress);
-    event RolesModSetup(
-        address indexed initiator,
-        address indexed owner,
-        address indexed avatar,
-        address target
-    );
+    event RolesModSetup(address indexed initiator, address indexed owner, address indexed avatar, address target);
     event SetDefaultRole(address module, uint16 defaultRole);
 
     /// Arrays must be the same length
@@ -29,11 +24,7 @@ contract Roles is Modifier {
     /// @param _owner Address of the owner
     /// @param _avatar Address of the avatar (e.g. a Gnosis Safe)
     /// @param _target Address of the contract that will call exec function
-    constructor(
-        address _owner,
-        address _avatar,
-        address _target
-    ) {
+    constructor(address _owner, address _avatar, address _target) {
         bytes memory initParams = abi.encode(_owner, _avatar, _target);
         setUp(initParams);
     }
@@ -41,11 +32,8 @@ contract Roles is Modifier {
     /// @dev There is no zero address check as solidty will check for
     /// missing arguments and the space of invalid addresses is too large
     /// to check. Invalid avatar or target address can be reset by owner.
-    function setUp(bytes memory initParams) public override {
-        (address _owner, address _avatar, address _target) = abi.decode(
-            initParams,
-            (address, address, address)
-        );
+    function setUp(bytes memory initParams) public override initializer {
+        (address _owner, address _avatar, address _target) = abi.decode(initParams, (address, address, address));
         __Ownable_init();
 
         avatar = _avatar;
@@ -57,7 +45,7 @@ contract Roles is Modifier {
         emit RolesModSetup(msg.sender, _owner, _avatar, _target);
     }
 
-    function setupModules() internal {
+    function setupModules() internal override {
         assert(modules[SENTINEL_MODULES] == address(0));
         modules[SENTINEL_MODULES] = SENTINEL_MODULES;
     }
@@ -75,11 +63,7 @@ contract Roles is Modifier {
     /// @param role Role to set for
     /// @param targetAddress Address to be allowed
     /// @param options defines whether or not delegate calls and/or eth can be sent to the target address.
-    function allowTarget(
-        uint16 role,
-        address targetAddress,
-        ExecutionOptions options
-    ) external onlyOwner {
+    function allowTarget(uint16 role, address targetAddress, ExecutionOptions options) external onlyOwner {
         Permissions.allowTarget(roles[role], role, targetAddress, options);
     }
 
@@ -87,10 +71,7 @@ contract Roles is Modifier {
     /// @notice Only callable by owner.
     /// @param role Role to set for
     /// @param targetAddress Address to be disallowed
-    function revokeTarget(uint16 role, address targetAddress)
-        external
-        onlyOwner
-    {
+    function revokeTarget(uint16 role, address targetAddress) external onlyOwner {
         Permissions.revokeTarget(roles[role], role, targetAddress);
     }
 
@@ -98,10 +79,7 @@ contract Roles is Modifier {
     /// @notice Only callable by owner.
     /// @param role Role to set for.
     /// @param targetAddress Address to be scoped.
-    function scopeTarget(uint16 role, address targetAddress)
-        external
-        onlyOwner
-    {
+    function scopeTarget(uint16 role, address targetAddress) external onlyOwner {
         Permissions.scopeTarget(roles[role], role, targetAddress);
     }
 
@@ -111,19 +89,11 @@ contract Roles is Modifier {
     /// @param targetAddress Scoped address on which a function signature should be allowed.
     /// @param functionSig Function signature to be allowed.
     /// @param options Defines whether or not delegate calls and/or eth can be sent to the function.
-    function scopeAllowFunction(
-        uint16 role,
-        address targetAddress,
-        bytes4 functionSig,
-        ExecutionOptions options
-    ) external onlyOwner {
-        Permissions.scopeAllowFunction(
-            roles[role],
-            role,
-            targetAddress,
-            functionSig,
-            options
-        );
+    function scopeAllowFunction(uint16 role, address targetAddress, bytes4 functionSig, ExecutionOptions options)
+        external
+        onlyOwner
+    {
+        Permissions.scopeAllowFunction(roles[role], role, targetAddress, functionSig, options);
     }
 
     /// @dev Disallows a specific function signature on a scoped target.
@@ -131,17 +101,8 @@ contract Roles is Modifier {
     /// @param role Role to set for
     /// @param targetAddress Scoped address on which a function signature should be disallowed.
     /// @param functionSig Function signature to be disallowed.
-    function scopeRevokeFunction(
-        uint16 role,
-        address targetAddress,
-        bytes4 functionSig
-    ) external onlyOwner {
-        Permissions.scopeRevokeFunction(
-            roles[role],
-            role,
-            targetAddress,
-            functionSig
-        );
+    function scopeRevokeFunction(uint16 role, address targetAddress, bytes4 functionSig) external onlyOwner {
+        Permissions.scopeRevokeFunction(roles[role], role, targetAddress, functionSig);
     }
 
     /// @dev Sets scoping rules for a function, on a scoped address.
@@ -165,15 +126,7 @@ contract Roles is Modifier {
         ExecutionOptions options
     ) external onlyOwner {
         Permissions.scopeFunction(
-            roles[role],
-            role,
-            targetAddress,
-            functionSig,
-            isParamScoped,
-            paramType,
-            paramComp,
-            compValue,
-            options
+            roles[role], role, targetAddress, functionSig, isParamScoped, paramType, paramComp, compValue, options
         );
     }
 
@@ -190,13 +143,7 @@ contract Roles is Modifier {
         bytes4 functionSig,
         ExecutionOptions options
     ) external onlyOwner {
-        Permissions.scopeFunctionExecutionOptions(
-            roles[role],
-            role,
-            targetAddress,
-            functionSig,
-            options
-        );
+        Permissions.scopeFunctionExecutionOptions(roles[role], role, targetAddress, functionSig, options);
     }
 
     /// @dev Sets and enforces scoping rules, for a single parameter of a function, on a scoped target.
@@ -218,14 +165,7 @@ contract Roles is Modifier {
         bytes calldata compValue
     ) external onlyOwner {
         Permissions.scopeParameter(
-            roles[role],
-            role,
-            targetAddress,
-            functionSig,
-            paramIndex,
-            paramType,
-            paramComp,
-            compValue
+            roles[role], role, targetAddress, functionSig, paramIndex, paramType, paramComp, compValue
         );
     }
 
@@ -247,13 +187,7 @@ contract Roles is Modifier {
         bytes[] calldata compValues
     ) external onlyOwner {
         Permissions.scopeParameterAsOneOf(
-            roles[role],
-            role,
-            targetAddress,
-            functionSig,
-            paramIndex,
-            paramType,
-            compValues
+            roles[role], role, targetAddress, functionSig, paramIndex, paramType, compValues
         );
     }
 
@@ -263,30 +197,18 @@ contract Roles is Modifier {
     /// @param targetAddress Scoped address on which functionSig lives.
     /// @param functionSig Function signature to be scoped.
     /// @param paramIndex The index of the parameter to un-scope.
-    function unscopeParameter(
-        uint16 role,
-        address targetAddress,
-        bytes4 functionSig,
-        uint8 paramIndex
-    ) external onlyOwner {
-        Permissions.unscopeParameter(
-            roles[role],
-            role,
-            targetAddress,
-            functionSig,
-            paramIndex
-        );
+    function unscopeParameter(uint16 role, address targetAddress, bytes4 functionSig, uint8 paramIndex)
+        external
+        onlyOwner
+    {
+        Permissions.unscopeParameter(roles[role], role, targetAddress, functionSig, paramIndex);
     }
 
     /// @dev Assigns and revokes roles to a given module.
     /// @param module Module on which to assign/revoke roles.
     /// @param _roles Roles to assign/revoke.
     /// @param memberOf Assign (true) or revoke (false) corresponding _roles.
-    function assignRoles(
-        address module,
-        uint16[] calldata _roles,
-        bool[] calldata memberOf
-    ) external onlyOwner {
+    function assignRoles(address module, uint16[] calldata _roles, bool[] calldata memberOf) external onlyOwner {
         if (_roles.length != memberOf.length) {
             revert ArraysDifferentLength();
         }
@@ -313,20 +235,13 @@ contract Roles is Modifier {
     /// @param data Data payload of module transaction
     /// @param operation Operation type of module transaction
     /// @notice Can only be called by enabled modules
-    function execTransactionFromModule(
-        address to,
-        uint256 value,
-        bytes calldata data,
-        Enum.Operation operation
-    ) public override moduleOnly returns (bool success) {
-        Permissions.check(
-            roles[defaultRoles[msg.sender]],
-            multisend,
-            to,
-            value,
-            data,
-            operation
-        );
+    function execTransactionFromModule(address to, uint256 value, bytes calldata data, Enum.Operation operation)
+        public
+        override
+        moduleOnly
+        returns (bool success)
+    {
+        Permissions.check(roles[defaultRoles[msg.sender]], multisend, to, value, data, operation);
         return exec(to, value, data, operation);
     }
 
@@ -342,14 +257,7 @@ contract Roles is Modifier {
         bytes calldata data,
         Enum.Operation operation
     ) public override moduleOnly returns (bool, bytes memory) {
-        Permissions.check(
-            roles[defaultRoles[msg.sender]],
-            multisend,
-            to,
-            value,
-            data,
-            operation
-        );
+        Permissions.check(roles[defaultRoles[msg.sender]], multisend, to, value, data, operation);
         return execAndReturnData(to, value, data, operation);
     }
 
