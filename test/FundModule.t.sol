@@ -10,7 +10,6 @@ import "forge-std/console2.sol";
 import "forge-std/Test.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../src/ERC20Decimal.sol";
-import "../src/InvestorLimits.sol";
 import "./utils/FundModuleBase.sol";
 // import "@solmate/utils/FixedPointMathLib.sol"; //PRBMath also an option
 

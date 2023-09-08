@@ -10,7 +10,6 @@ import "forge-std/console2.sol";
 import "forge-std/Test.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../../src/ERC20Decimal.sol";
-import "../../src/InvestorLimits.sol";
 // import "forge-std/StdInvariant.sol";
 // import "@solmate/utils/FixedPointMathLib.sol"; //PRBMath also an option
 
@@ -30,8 +29,6 @@ contract FundModuleBase is Test {
     function setUp() public virtual {
         safe = new MockSafe();
         mockUsdc = new ERC20Decimal("USD Coin", "USDC", decimals);
-        InvestorLimits investorLimits;
-        investorLimits = new InvestorLimits(50);
         manager = vm.addr(1);
         accountant = vm.addr(2);
         investor = vm.addr(3);
@@ -47,8 +44,7 @@ contract FundModuleBase is Test {
             address(mockUsdc),
             0.02 ether,
             0.2 ether,
-            90 days,
-            address(investorLimits)
+            90 days
             );
         //enable module on Safe
         safe.enableModule(address(fundModule));

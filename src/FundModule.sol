@@ -74,7 +74,7 @@ contract FundModule is Module, FundToken, WhitelistManager {
     /// @param initializeParams Parameters of initialization encoded
     function setUp(bytes memory initializeParams) public virtual override initializer {
         //This func is needed for modules as they are minimal proxies pointing to a master copy so its like a constructor work around
-        // __Ownable_init();
+        __Ownable_init();
         (
             address _manager,
             address _accountant,
