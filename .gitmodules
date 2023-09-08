@@ -19,3 +19,6 @@
 [submodule "lib/ds-test"]
 	path = lib/ds-test
 	url = https://github.com/dapphub/ds-test
+[submodule "lib/zodiac-modifier-roles-v1"]
+	path = lib/zodiac-modifier-roles-v1
+	url = https://github.com/gnosis/zodiac-modifier-roles-v1
