@@ -9,7 +9,8 @@ import "forge-std/console.sol";
 import "forge-std/console2.sol";
 import "forge-std/Test.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "zodiac-modifier-roles/Roles.sol";
+import "zodiac-modifier-roles-v1/Roles.sol";
+import "zodiac-modifier-roles-v1/Permissions.sol";
 import "../../src/ERC20Decimal.sol";
 // import "forge-std/StdInvariant.sol";
 // import "@solmate/utils/FixedPointMathLib.sol"; //PRBMath also an option
@@ -24,6 +25,7 @@ contract FundModuleBase is Test {
     address public manager;
     address public accountant;
     address public investor;
+    address public guardian;
     uint256 public constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
     uint8 public decimals = 6;
 
@@ -54,7 +56,11 @@ contract FundModuleBase is Test {
         return (fundModule, safe);
     }
 
-    function deployRoles(MockSafe safe) internal {}
+    function deployRoles(MockSafe safe) internal virtual {
+        // Permissions permissions = new Permissions();
+        guardian = vm.addr(4);
+        Roles roles = new Roles(guardian, address(safe), address(safe));
+    }
 
     function getMockUsdc(address _investor, uint256 _amount) public {
         //vm.deal with 4 params not working here so importing StdCheats as a work around

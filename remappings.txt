@@ -3,7 +3,7 @@ forge-std/=lib/forge-std/src/
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 @gnosis.pm/safe-contracts=lib/safe-contracts/
+@gnosis.pm/zodiac=lib/zodiac/
 solmate/=lib/solmate/src/
 zodiac/=lib/zodiac/contracts/
-
-
+zodiac-modifier-roles-v1/=lib/zodiac-modifier-roles-v1/packages/evm/contracts
