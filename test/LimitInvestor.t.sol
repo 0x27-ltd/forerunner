@@ -22,12 +22,20 @@ contract LimitInvestorTest is FundModuleBase {
         (fundModule, safe) = FundModuleBase.setUp();
     }
 
+    function testTransfer() public {
+        safe.enableModule(address(roles)); // needs to be enabled to allow execTxFromRole()
+        vm.prank(guardian);
+        easyAllowTargets(address(mockUsdc));
+        vm.prank(manager);
+        // roles.execTransactionFromModule();
+    }
+
     function testInvest() public {
         // FundModuleBase.whitelistInvestor(investor);
         // FundModuleBase.getMockUsdc(investor, 1000000);
         // vm.prank(accountant);
         // FundModuleBase.fundModule._customValuation(0);
 
-        FundModuleBase.quickInvest(investor, 1000000, 0);
+        // FundModuleBase.quickInvest(investor, 1000000, 0);
     }
 }

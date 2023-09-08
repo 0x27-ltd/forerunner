@@ -10,7 +10,7 @@ import "forge-std/console2.sol";
 import "forge-std/Test.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "zodiac-modifier-roles-v1/Roles.sol";
-import "zodiac-modifier-roles-v1/Permissions.sol";
+// import "zodiac-modifier-roles-v1/Permissions.sol";
 import "../../src/ERC20Decimal.sol";
 import "./WeiHelper.sol";
 // import "forge-std/StdInvariant.sol";
@@ -21,13 +21,12 @@ import "./WeiHelper.sol";
 //run specific test:
 contract FundModuleBase is Test, WeiHelper {
     MockSafe public safe;
+    Roles public roles;
     ERC20Decimal public mockUsdc;
     FundModule public fundModule;
     address public manager;
     address public accountant;
     address public investor;
-    address public investorTwo;
-    address public investorThree;
     address public guardian;
     uint256 public constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
     uint8 public decimals = 6;
@@ -38,8 +37,6 @@ contract FundModuleBase is Test, WeiHelper {
         manager = vm.addr(1);
         accountant = vm.addr(2);
         investor = vm.addr(3);
-        investorTwo = vm.addr(4);
-        investorThree = vm.addr(5);
         vm.label(manager, "manager"); //label addresses so the label appears in call traces not address
         vm.label(accountant, "accountant");
         vm.label(investor, "investor");
@@ -56,15 +53,28 @@ contract FundModuleBase is Test, WeiHelper {
             );
         //enable module on Safe
         safe.enableModule(address(fundModule));
+        _deployRoles();
         //when StdInvariant is in use for stateful fuzz testing we need to define the target contract that will have its functions called
         // targetContract(address(fundModule));
         return (fundModule, safe);
     }
 
-    function deployRoles(MockSafe safe) internal virtual {
-        // Permissions permissions = new Permissions();
+    function _deployRoles() internal {
         guardian = vm.addr(4);
-        Roles roles = new Roles(guardian, address(safe), address(safe));
+        roles = new Roles(guardian, address(safe), address(safe));
+        vm.prank(guardian);
+        uint16[] memory assignRoles = new uint16[](1);
+        assignRoles[0] = uint16(1);
+        bool[] memory memberOf = new bool[](1);
+        memberOf[0] = true;
+        roles.assignRoles(manager, assignRoles, memberOf);
+        vm.prank(guardian);
+        roles.setDefaultRole(manager, 1);
+    }
+
+    function easyAllowTargets(address target) public {
+        //Although role whitelisting can be much more granular, doing contract wide allows is a nice simplification for initial testing
+        roles.allowTarget(1, target, ExecutionOptions(3));
     }
 
     function getMockUsdc(address _investor, uint256 _amount) public {
@@ -95,12 +105,9 @@ contract FundModuleBase is Test, WeiHelper {
     function quickInvest(address _investor, uint256 _amount, uint256 _valuation) public {
         whitelistInvestor(_investor);
         getMockUsdc(_investor, _amount);
-        vm.startPrank(_investor);
+        vm.prank(_investor);
         fundModule.queueInvestment(_amount);
-        // FundModuleBase.mockUsdc.approve(address(fundModule), _amount);
-        // // console.log("allowance: ", FundModuleBase.mockUsdc.allowance(investor, address(FundModuleBase.fundModule)));
-        // vm.stopPrank();
-        // vm.prank(accountant);
+        vm.prank(accountant);
         // fundModule.updateStateWithPrice(_valuation);
         // assertTrue(fundModule.balanceOf(_investor) > 0);
     }
