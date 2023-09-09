@@ -39,6 +39,7 @@ contract FundModuleBase is Test, WeiHelper {
         investor = vm.addr(3);
         vm.label(manager, "manager"); //label addresses so the label appears in call traces not address
         vm.label(accountant, "accountant");
+        vm.label(address(safe), "safe");
         vm.label(investor, "investor");
         fundModule = new FundModule(
             "FORERUNNER",
@@ -61,6 +62,7 @@ contract FundModuleBase is Test, WeiHelper {
 
     function _deployRoles() internal {
         guardian = vm.addr(4);
+        vm.label(guardian, "guardian");
         roles = new Roles(guardian, address(safe), address(safe));
         vm.prank(guardian);
         uint16[] memory assignRoles = new uint16[](1);
@@ -75,6 +77,22 @@ contract FundModuleBase is Test, WeiHelper {
     function easyAllowTargets(address target) public {
         //Although role whitelisting can be much more granular, doing contract wide allows is a nice simplification for initial testing
         roles.allowTarget(1, target, ExecutionOptions(3));
+    }
+
+    function execRolesTx(address target, bytes memory txData, Enum.Operation operation) public {
+        // (bool success,) = address(roles).delegatecall(
+        //     abi.encodeWithSignature(
+        //         "execTransactionWithRole(address,uint256,bytes,uint8,uint16,bool)",
+        //         target,
+        //         0,
+        //         txData,
+        //         operation,
+        //         1,
+        //         true
+        //     )
+        // );
+        // require(success, " Delegate Call failed");
+        roles.execTransactionWithRole(target, 0, txData, operation, 1, true);
     }
 
     function getMockUsdc(address _investor, uint256 _amount) public {

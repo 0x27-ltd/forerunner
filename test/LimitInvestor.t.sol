@@ -12,7 +12,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../src/ERC20Decimal.sol";
 import "./utils/FundModuleBase.sol";
 // import "@solmate/utils/FixedPointMathLib.sol"; //PRBMath also an option
-import "forge-std/console.sol";
 
 //run with verbosity (-v -> -vvvvv): forge test -vv
 //run specific test contract: forge test -vv --match-contract ModuleTest
@@ -23,11 +22,18 @@ contract LimitInvestorTest is FundModuleBase {
     }
 
     function testTransfer() public {
+        FundModuleBase.getMockUsdc(address(safe), 1000000);
         safe.enableModule(address(roles)); // needs to be enabled to allow execTxFromRole()
         vm.prank(guardian);
         easyAllowTargets(address(mockUsdc));
-        vm.prank(manager);
-        // roles.execTransactionFromModule();
+        vm.startPrank(manager);
+        uint256 amount = 10000;
+        // 0 = call, 1 = delegate_call
+        execRolesTx(
+            address(mockUsdc), abi.encodeWithSelector(mockUsdc.transfer.selector, guardian, amount), Enum.Operation(0)
+        );
+        vm.stopPrank();
+        assertEq(mockUsdc.balanceOf(guardian), amount);
     }
 
     function testInvest() public {
