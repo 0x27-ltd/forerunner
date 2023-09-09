@@ -306,4 +306,14 @@ contract Roles is Modifier {
             revert ModuleTransactionFailed();
         }
     }
+
+    /// @dev check the permission of the role instead of accessing the entire roles struct
+    function check(address to, uint256 value, bytes calldata data, Enum.Operation operation, uint16 role)
+        external
+        view
+        returns (bool success)
+    {
+        Permissions.check(roles[role], multisend, to, value, data, operation);
+        success = true;
+    }
 }
