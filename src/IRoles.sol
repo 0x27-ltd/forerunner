@@ -92,4 +92,5 @@ interface IRoles {
     function target() external view returns (address);
     function transferOwnership(address newOwner) external;
     function unscopeParameter(uint16 role, address targetAddress, bytes4 functionSig, uint8 paramIndex) external;
+    //@todo add check()
 }
