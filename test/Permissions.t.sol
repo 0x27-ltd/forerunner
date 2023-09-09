@@ -11,36 +11,30 @@ import "forge-std/Test.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../src/ERC20Decimal.sol";
 import "./utils/FundModuleBase.sol";
-// import "@solmate/utils/FixedPointMathLib.sol"; //PRBMath also an option
 
-//run with verbosity (-v -> -vvvvv): forge test -vv
-//run specific test contract: forge test -vv --match-contract ModuleTest
+contract PermissionsTest is FundModuleBase {
+    /// Sender is allowed to make this call, but the internal transaction failed
+    error ModuleTransactionFailed();
 
-contract LimitInvestorTest is FundModuleBase {
     function setUp() public virtual override returns (FundModule, MockSafe) {
         (fundModule, safe) = FundModuleBase.setUp();
     }
 
-    function testTransfer() public {
+    function testPermissions() public {
         FundModuleBase.getMockUsdc(address(safe), 1000000);
-        safe.enableModule(address(roles)); // needs to be enabled to allow execTxFromRole()
+        // safe.enableModule(address(roles)); // needs to be enabled to allow execTxFromRole()
         vm.prank(guardian);
         easyAllowTargets(address(mockUsdc));
         vm.startPrank(manager);
         uint256 amount = 10000;
-        execRolesTx(
-            address(mockUsdc), abi.encodeWithSelector(mockUsdc.transfer.selector, guardian, amount), Enum.Operation.Call
-        );
+        address to = address(mockUsdc);
+        bytes memory data = abi.encodeWithSelector(mockUsdc.transfer.selector, guardian, amount);
+        Enum.Operation operation = Enum.Operation.Call;
+        // start execTransactionWithRole
+        roles.check(to, 0, data, operation, 1);
         vm.stopPrank();
+        safe.exec(payable(to), 0, data);
+        // end
         assertEq(mockUsdc.balanceOf(guardian), amount);
-    }
-
-    function testInvest() public {
-        // FundModuleBase.whitelistInvestor(investor);
-        // FundModuleBase.getMockUsdc(investor, 1000000);
-        // vm.prank(accountant);
-        // FundModuleBase.fundModule._customValuation(0);
-
-        // FundModuleBase.quickInvest(investor, 1000000, 0);
     }
 }
