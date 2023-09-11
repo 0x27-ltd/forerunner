@@ -2,26 +2,27 @@
 
 ## On-chain Investment Funds Reimagined 📈
 
-A better way to structure Investment Funds, extending Safe through a module that enables the functionality of a fully flegded regulated Investment Fund.
+Extending Safe through a module/plugin that enables the functionality of an institutional grade Investment Fund with legal recognition.
 
-## Why is this good for Safe?
-Statista estimates that $60 Trillion lives in Investment Funds in 2022. Over the long term these assets will flow on-chain. This represents a cartoonishly large opportunity for technology providers to house these flows. The TVL a regulatory considerate Investment Fund framework could bring to Safe is immense.
+## The Opportunity 💎
 
-[source](https://www.statista.com/statistics/1194559/net-assets-regulated-open-end-funds-worldwide-type/)
+In light of the prevailing momentum in tokenisation, trillions of dollars in assets are poised to transition onto blockchain networks. Leading financial institutions, including Citi, project a substantial $4 to $5 trillion in asset tokenisation by 2030. As a significant portion of global financial assets currently resides in traditional investment funds, it follows that a substantial share of these newly tokenised assets will naturally gravitate towards on-chain, or tokenised, investment funds. These tokenised funds offer key benefits such as enhanced operational efficiency, cost reduction, and increased transparency, making it prudent to extend tokenisation to both the asset and the fund.
 
-## How, simply?
-* Investment Fund Module provides the logic to run a Fund
-* Zodiac Roles Modifier ensures sound access control
-* Investors use Safe with Auth Kit for MPC & improved key managment
+[source](https://icg.citi.com/icghome/what-we-think/citigps/insights/money-tokens-and-games)
 
-### Planned Features (MVP): 📅
+## Why is this good for Safe? 🔐
 
-* 👫 Stakeholder management (Fund Admin, Manager, Investor, Guardian)
-* 💸 AUM Fee & HWM Performance Fee
-* 💰 Withdraw/Invest Queue
-* 🔄 Admin state updates
+* Attract a new institutional user base to Safe (high value users)
+* Grow protocol TVL, a key growth KPI
+
+### Core Features: 📅
+
+* 🧠 Core Fund Logic (withdraw/invest, fund state, pricing etc)
+* 👫 Stakeholder permission management
+* ✨ Manager protocol access control governed by Zodiac Roles Modifier
+* 🔒 Locks & Gates
+* 💸 Fees (AUM, performance with HWM, entry/exit and protocol fees)
+* 💰 Fee sharing agreements (for fund bootstrapping)
 * 🏳️ Investor KYC Whitelist
-* 🏛️ Jurisdiction specific regulation
-
-### P.S
-Please note some legacy code here relfects the initial idea for this project that is now stale, a small scale personal Fund framework. Stay tuned - substantial refactoring incoming!
+* 🏛️ Jurisdiction specific compliance (e.g. investor/aum limits, min/max investments, investor ejection)
+* 🎨 Account abstraction: gasless investment from investors perspective, expensed to fund
