@@ -174,17 +174,7 @@ contract FundModule is Module, FundToken, WhitelistManager {
     function updateStateWithPrice(uint256 netAssetValue) public onlyAccountant {
         //value fund so shares can be accurately issued and burnt
         _customValuation(netAssetValue);
-        //calculate fees due, these need to be paid before investments and withdrawals take place
-        _calculatePendingAumFee();
-        _calculatePendingPerfFee();
-        //Ensure crystalistaion period has been met before paying out all the performance fees
-        if (fundState.lastCrystalised >= fundState.crystalisationPeriod) {
-            _payoutPerfFees();
-            _payoutAumFees();
-        } else {
-            //payout only aum fees as performance fee has not yet crystalised
-            _payoutAumFees();
-        }
+        // fee logic I stripped out needs to go here
         //@todo Do we need to process withdrawals first before we process investments? worried about inaccurate share issuance if we don't do it seperatley [verify this!]
         for (uint256 i = 0; i < _whitelistAddresses.length; i++) {
             address investor = _whitelistAddresses[i];
@@ -230,7 +220,7 @@ contract FundModule is Module, FundToken, WhitelistManager {
         emit Invested(address(baseAsset), _investor, block.timestamp, _amount, newShares);
     }
 
-    //Process the withdraw action, to be called when processing the transaction queue
+    //Process the withdraw action, to be called when processing the transaction queue only
     function _withdraw(address _investor, uint256 _shares, bool isPendingUncrystalised) internal {
         require(balanceOf(_investor) >= _shares, "insufficient shares");
         //Investors share of assets
@@ -260,51 +250,6 @@ contract FundModule is Module, FundToken, WhitelistManager {
         emit Withdrawn(address(baseAsset), msg.sender, block.timestamp, netPayout, _shares);
     }
 
-    //calculate aum fees due since last time the calc was performed, but don't pay
-    function _calculatePendingAumFee() internal {
-        uint256 aumFeeAmount = fundState.totalAssets
-            * (fundState.aumFeeRatePerSecond * (block.timestamp - fundState.lastAumFeeCalcTime)) / 1 ether;
-        fundState.pendingAumFees += aumFeeAmount;
-        fundState.lastAumFeeCalcTime = block.timestamp;
-    }
-
-    //calculate perf fees due since last time the calc was performed, but don't pay
-    function _calculatePendingPerfFee() internal {
-        //True implies perf fee and aum fee due, false means only aum fee due
-        if (fundState.sharePrice > fundState.highWaterMark) {
-            uint256 perfFeeAmount =
-                (fundState.sharePrice - fundState.highWaterMark) * totalSupply() * fundState.perfFeeRate / 1e18;
-            fundState.highWaterMark = fundState.sharePrice;
-            fundState.lastAumFeeCalcTime = block.timestamp; //this may be useful for crystalisation down the line
-            fundState.pendingPerfFees += perfFeeAmount;
-        } else {
-            //@audit add logic for where the performance has been lost and shareprice has fallen below hwm
-        }
-    }
-
-    //Helper just to send baseAsset around (to manager for fees for example)
-    function _pay(address to, uint256 amount) internal {
-        exec(
-            address(baseAsset), 0, abi.encodeWithSelector(baseAsset.transfer.selector, to, amount), Enum.Operation.Call
-        );
-    }
-
-    //process pending aum fee payment due to manager
-    function _payoutAumFees() internal {
-        uint256 feesDue = fundState.pendingAumFees;
-        fundState.totalAssets -= feesDue;
-        fundState.pendingAumFees = 0;
-        _pay(manager, feesDue);
-    }
-
-    //process pending perf fee payment due to manager
-    function _payoutPerfFees() internal {
-        uint256 feesDue = fundState.pendingPerfFees;
-        fundState.totalAssets -= feesDue;
-        fundState.pendingPerfFees = 0;
-        _pay(manager, feesDue);
-    }
-
     //Allows fund admin to price the fund via other func
     function _customValuation(uint256 netAssetValue) internal {
         fundState.lastValuationTime = block.timestamp;
@@ -317,27 +262,20 @@ contract FundModule is Module, FundToken, WhitelistManager {
         emit Priced(fundState.totalAssets, fundState.sharePrice, block.timestamp);
     }
 
-    //If all of Safe's assets are held in the baseAsset in the safe, we can use a simple balanceOf call to value the fund
-    //@todo potentially remove this
-    function baseAssetValuation() public onlyAccountant {
-        fundState.lastValuationTime = block.timestamp;
-        fundState.totalAssets = baseAsset.balanceOf(this.avatar()) * 1 ether / 10 ** baseAsset.decimals();
-        if (fundState.totalAssets == 0) {
-            fundState.sharePrice = 1 ether;
-        } else {
-            fundState.sharePrice = fundState.totalAssets * (1 ether) / totalSupply();
-        }
-        emit Priced(fundState.totalAssets, fundState.sharePrice, block.timestamp);
-    }
-
-    //Only here in case of emergency where baseAsset has some issue and needs to be changed for redemption purposes
+    //legacy, remove or change: originally here in case of emergency where baseAsset has some issue and needs to be changed for redemption purposes
     function changeBaseAsset(address newBaseAsset) public onlyManager {
         require(newBaseAsset != address(0), "!address");
         require(IERC20Metadata(newBaseAsset).decimals() <= 18); //precision errors will arise if decimals > 18
         baseAsset = IERC20Metadata(newBaseAsset);
     }
 
-    //Solidity by default declares structs as internal
+    //Helper just to send baseAsset around (to manager for fees for example)
+    function _pay(address to, uint256 amount) internal {
+        exec(
+            address(baseAsset), 0, abi.encodeWithSelector(baseAsset.transfer.selector, to, amount), Enum.Operation.Call
+        );
+    }
+
     function getFundState() public view returns (FundState memory) {
         return fundState;
     }
