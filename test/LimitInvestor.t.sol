@@ -23,13 +23,17 @@ contract LimitInvestorTest is FundModuleBase {
 
     function testTransfer() public {
         FundModuleBase.getMockUsdc(address(safe), 1000000);
-        safe.enableModule(address(roles)); // needs to be enabled to allow execTxFromRole()
-        vm.prank(guardian);
+        // safe.enableModule(address(roles)); // needs to be enabled to allow execTxFromRole()
         easyAllowTargets(address(mockUsdc));
         vm.startPrank(manager);
         uint256 amount = 10000;
-        execRolesTx(
-            address(mockUsdc), abi.encodeWithSelector(mockUsdc.transfer.selector, guardian, amount), Enum.Operation.Call
+        bool success = fundModule.execWithPermission(
+            address(mockUsdc),
+            0,
+            abi.encodeWithSelector(mockUsdc.transfer.selector, guardian, amount),
+            Enum.Operation.Call,
+            1,
+            true
         );
         vm.stopPrank();
         assertEq(mockUsdc.balanceOf(guardian), amount);

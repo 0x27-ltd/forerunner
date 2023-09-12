@@ -9,8 +9,8 @@ import "forge-std/console.sol";
 import "./WhitelistManager.sol";
 import "./FundToken.sol";
 import "./compliance/IModularCompliance.sol";
-import "zodiac-modifier-roles-v1/Roles.sol";
-// import "./IFundModule.sol";
+// import "zodiac-modifier-roles-v1/Roles.sol";
+import "./IRoles.sol";
 
 contract FundModule is Module, FundToken, WhitelistManager {
     struct FundState {
@@ -39,14 +39,14 @@ contract FundModule is Module, FundToken, WhitelistManager {
 
     address public manager;
     address public accountant;
+    address public guardian;
     FundState public fundState;
     IERC20Metadata public baseAsset;
     address[] private _investors;
 
-    Roles public roles;
-    /// Sender is allowed to make this call, but the internal transaction failed
+    IRoles public roles;
 
-    error ModuleTransactionFailed();
+    // error ModuleTransactionFailed();
 
     // event ModifiedWhitelist(address indexed investor, uint256 timestamp, bool isWhitelisted);
     event Invested(
@@ -105,7 +105,6 @@ contract FundModule is Module, FundToken, WhitelistManager {
             lastCrystalised: block.timestamp,
             crystalisationPeriod: _crystalisationPeriod
         });
-        roles = new Roles(address(this), _fundSafe, _fundSafe); // @todo owner cant be this contract unless we forward all calls from guardian
         //IERC20Metadata was needed as it also exposes decimals()
         baseAsset = IERC20Metadata(_baseAsset);
         require(baseAsset.decimals() <= 18); //@note precision errors will arise if decimals > 18
@@ -114,6 +113,11 @@ contract FundModule is Module, FundToken, WhitelistManager {
         //Safe modules call on the Target contract (in our case its the safe too) so it to be set
         setTarget(_fundSafe);
         transferOwnership(_fundSafe);
+    }
+
+    function configAccessControl(address _roles, address _guardian) public {
+        roles = IRoles(_roles);
+        guardian = _guardian;
     }
 
     //Module inherits from ContextUpgradable.sol and ERC20 inherits from Context.sol, and both have an implementation for _msgSender & _msgData. Hence the need to override them here.
@@ -368,11 +372,13 @@ contract FundModule is Module, FundToken, WhitelistManager {
         uint16 role,
         bool shouldRevert
     ) public onlyManager returns (bool success) {
-        roles.check(to, value, data, operation, role);
-        //@todo can now add compliance on assets within fund
-        success = exec(to, value, data, operation);
-        if (shouldRevert && !success) {
-            revert ModuleTransactionFailed();
-        }
+        // // address called = address(roles);
+        // roles.check(to, value, data, uint8(operation), role);
+        // //@todo can now add compliance on assets within fund
+        // success = exec(to, value, data, operation);
+        // if (shouldRevert && !success) {
+        //     revert ModuleTransactionFailed();
+        // }
+        roles.execTransactionWithRole(to, value, data, uint8(operation), role, shouldRevert);
     }
 }

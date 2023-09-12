@@ -20,20 +20,24 @@ contract PermissionsTest is FundModuleBase {
         (fundModule, safe) = FundModuleBase.setUp();
     }
 
-    function testPermissions() public {
+    function easyAllow() internal {
         FundModuleBase.getMockUsdc(address(safe), 1000000);
         // safe.enableModule(address(roles)); // needs to be enabled to allow execTxFromRole()
-        vm.prank(guardian);
         easyAllowTargets(address(mockUsdc));
+    }
+
+    function testPermissions() public {
+        easyAllow();
         vm.startPrank(manager);
         uint256 amount = 10000;
         address to = address(mockUsdc);
         bytes memory data = abi.encodeWithSelector(mockUsdc.transfer.selector, guardian, amount);
         Enum.Operation operation = Enum.Operation.Call;
         // start execTransactionWithRole
-        roles.check(to, 0, data, operation, 1);
+        bool success = fundModule.execWithPermission(to, 0, data, operation, 1, true);
+        // IRoles(fundModule.fundRoles()).check(to, 0, data, uint8(operation), 1);
         vm.stopPrank();
-        safe.exec(payable(to), 0, data);
+        // safe.exec(payable(to), 0, data);
         // end
         assertEq(mockUsdc.balanceOf(guardian), amount);
     }

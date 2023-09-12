@@ -12,6 +12,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "zodiac-modifier-roles-v1/Roles.sol";
 // import "zodiac-modifier-roles-v1/Permissions.sol";
 import "../../src/ERC20Decimal.sol";
+import "../../src/IRoles.sol";
 import "./WeiHelper.sol";
 // import "forge-std/StdInvariant.sol";
 // import "@solmate/utils/FixedPointMathLib.sol"; //PRBMath also an option
@@ -41,6 +42,8 @@ contract FundModuleBase is Test, WeiHelper {
         vm.label(accountant, "accountant");
         vm.label(address(safe), "safe");
         vm.label(investor, "investor");
+        guardian = vm.addr(4);
+        vm.label(guardian, "guardian");
         fundModule = new FundModule(
             "FORERUNNER",
             "4RUNR",
@@ -52,47 +55,34 @@ contract FundModuleBase is Test, WeiHelper {
             0.2 ether,
             90 days
             );
+        roles = _deployRoles();
+        fundModule.configAccessControl(address(roles), address(guardian));
+        vm.label(address(roles), "roles");
+        vm.label(address(fundModule), "fundModule");
         //enable module on Safe
         safe.enableModule(address(fundModule));
-        _deployRoles();
+        safe.enableModule(address(roles));
         //when StdInvariant is in use for stateful fuzz testing we need to define the target contract that will have its functions called
         // targetContract(address(fundModule));
         return (fundModule, safe);
     }
 
-    function _deployRoles() internal {
-        guardian = vm.addr(4);
-        vm.label(guardian, "guardian");
-        roles = new Roles(guardian, address(safe), address(safe));
-        vm.prank(guardian);
+    function _deployRoles() internal returns (Roles deployed) {
+        deployed = new Roles(guardian, address(safe), address(safe)); //@todo replace owner as fundModule
         uint16[] memory assignRoles = new uint16[](1);
         assignRoles[0] = uint16(1);
         bool[] memory memberOf = new bool[](1);
         memberOf[0] = true;
-        roles.assignRoles(manager, assignRoles, memberOf);
-        vm.prank(guardian);
-        roles.setDefaultRole(manager, 1);
+        vm.startPrank(guardian);
+        deployed.assignRoles(address(fundModule), assignRoles, memberOf);
+        deployed.setDefaultRole(address(fundModule), 1);
+        vm.stopPrank();
     }
 
     function easyAllowTargets(address target) public {
         //Although role whitelisting can be much more granular, doing contract wide allows is a nice simplification for initial testing
+        vm.prank(guardian);
         roles.allowTarget(1, target, ExecutionOptions(3));
-    }
-
-    function execRolesTx(address target, bytes memory txData, Enum.Operation operation) public {
-        // (bool success,) = address(roles).delegatecall(
-        //     abi.encodeWithSignature(
-        //         "execTransactionWithRole(address,uint256,bytes,uint8,uint16,bool)",
-        //         target,
-        //         0,
-        //         txData,
-        //         operation,
-        //         1,
-        //         true
-        //     )
-        // );
-        // require(success, " Delegate Call failed");
-        roles.execTransactionWithRole(target, 0, txData, operation, 1, true);
     }
 
     function getMockUsdc(address _investor, uint256 _amount) public {
