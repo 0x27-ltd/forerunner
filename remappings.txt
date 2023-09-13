@@ -7,3 +7,4 @@ forge-std/=lib/forge-std/src/
 solmate/=lib/solmate/src/
 zodiac/=lib/zodiac/contracts/
 zodiac-modifier-roles-v1/=lib/zodiac-modifier-roles-v1/packages/evm/contracts
+zodiac-modifier-roles/=lib/zodiac-modifier-roles/packages/evm/contracts
