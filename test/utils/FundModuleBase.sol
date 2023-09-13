@@ -9,8 +9,7 @@ import "forge-std/console.sol";
 import "forge-std/console2.sol";
 import "forge-std/Test.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "zodiac-modifier-roles-v1/Roles.sol";
-// import "zodiac-modifier-roles-v1/Permissions.sol";
+import "zodiac-modifier-roles/Roles.sol";
 import "../../src/ERC20Decimal.sol";
 import "../../src/IRoles.sol";
 import "./WeiHelper.sol";
@@ -31,6 +30,8 @@ contract FundModuleBase is Test, WeiHelper {
     address public guardian;
     uint256 public constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
     uint8 public decimals = 6;
+    bytes32 ROLE_KEY = 0x000000000000000000000000000000000000000000000000000000000000000f;
+    bytes32 ROLE_KEY1 = 0x0000000000000000000000000000000000000000000000000000000000000001;
 
     function setUp() public virtual returns (FundModule, MockSafe) {
         safe = new MockSafe();
@@ -56,7 +57,7 @@ contract FundModuleBase is Test, WeiHelper {
             90 days
             );
         roles = _deployRoles();
-        fundModule.configAccessControl(address(roles), address(guardian));
+        fundModule.setPolicyEngine(address(roles), address(guardian));
         vm.label(address(roles), "roles");
         vm.label(address(fundModule), "fundModule");
         //enable module on Safe

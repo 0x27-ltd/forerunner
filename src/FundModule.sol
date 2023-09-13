@@ -114,7 +114,8 @@ contract FundModule is Module, FundToken, WhitelistManager {
         transferOwnership(_fundSafe);
     }
 
-    function configAccessControl(address _roles, address _guardian) public {
+    function setPolicyEngine(address _roles, address _guardian) public {
+        //@todo add gate
         roles = IRoles(_roles);
         guardian = _guardian;
     }
@@ -306,16 +307,14 @@ contract FundModule is Module, FundToken, WhitelistManager {
         uint256 value,
         bytes calldata data,
         Enum.Operation operation,
-        uint16 role,
+        bytes32 role,
         bool shouldRevert
     ) public onlyManager returns (bool success) {
-        // // address called = address(roles);
-        // roles.check(to, value, data, uint8(operation), role);
-        // //@todo can now add compliance on assets within fund
-        // success = exec(to, value, data, operation);
-        // if (shouldRevert && !success) {
-        //     revert ModuleTransactionFailed();
-        // }
-        roles.execTransactionWithRole(to, value, data, uint8(operation), role, shouldRevert);
+        if (address(roles) != address(0)) {
+            roles.execTransactionWithRole(to, value, data, uint8(operation), role, shouldRevert);
+        } else {
+            // off chain policy engine is being used
+            exec(to, value, data, Enum.Operation.Call);
+        }
     }
 }
