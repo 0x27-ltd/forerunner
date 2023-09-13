@@ -9,7 +9,6 @@ import "forge-std/console.sol";
 import "./WhitelistManager.sol";
 import "./FundToken.sol";
 import "./compliance/IModularCompliance.sol";
-// import "zodiac-modifier-roles-v1/Roles.sol";
 import "./IRoles.sol";
 
 contract FundModule is Module, FundToken, WhitelistManager {

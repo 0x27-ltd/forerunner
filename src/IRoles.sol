@@ -1,21 +1,59 @@
 pragma solidity ^0.8.10;
 
 interface IRoles {
-    event AssignRoles(address module, uint16[] roles, bool[] memberOf);
+    event AllowFunction(bytes32 roleKey, address targetAddress, bytes4 selector, uint8 options);
+    event AllowTarget(bytes32 roleKey, address targetAddress, uint8 options);
+    event AssignRoles(address module, bytes32[] roleKeys, bool[] memberOf);
     event AvatarSet(address indexed previousAvatar, address indexed newAvatar);
     event ChangedGuard(address guard);
+    event ConsumeAllowance(bytes32 allowanceKey, uint128 consumed, uint128 newBalance);
     event DisabledModule(address module);
     event EnabledModule(address module);
+    event ExecutionFromModuleFailure(address indexed module);
+    event ExecutionFromModuleSuccess(address indexed module);
+    event Initialized(uint8 version);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event RevokeFunction(bytes32 roleKey, address targetAddress, bytes4 selector);
+    event RevokeTarget(bytes32 roleKey, address targetAddress);
     event RolesModSetup(address indexed initiator, address indexed owner, address indexed avatar, address target);
-    event SetDefaultRole(address module, uint16 defaultRole);
-    event SetMultisendAddress(address multisendAddress);
+    event ScopeFunction(
+        bytes32 roleKey, address targetAddress, bytes4 selector, ConditionFlat[] conditions, uint8 options
+    );
+    event ScopeTarget(bytes32 roleKey, address targetAddress);
+    event SetAllowance(
+        bytes32 allowanceKey,
+        uint128 balance,
+        uint128 maxBalance,
+        uint128 refillAmount,
+        uint64 refillInterval,
+        uint64 refillTimestamp
+    );
+    event SetDefaultRole(address module, bytes32 defaultRoleKey);
+    event SetUnwrapAdapter(address to, bytes4 selector, address adapter);
     event TargetSet(address indexed previousTarget, address indexed newTarget);
 
-    function allowTarget(uint16 role, address targetAddress, uint8 options) external;
-    function assignRoles(address module, uint16[] memory _roles, bool[] memory memberOf) external;
+    struct ConditionFlat {
+        uint8 parent;
+        uint8 paramType;
+        uint8 operator;
+        bytes compValue;
+    }
+
+    function allowFunction(bytes32 roleKey, address targetAddress, bytes4 selector, uint8 options) external;
+    function allowTarget(bytes32 roleKey, address targetAddress, uint8 options) external;
+    function allowances(bytes32)
+        external
+        view
+        returns (
+            uint128 refillAmount,
+            uint128 maxBalance,
+            uint64 refillInterval,
+            uint128 balance,
+            uint64 refillTimestamp
+        );
+    function assignRoles(address module, bytes32[] memory roleKeys, bool[] memory memberOf) external;
     function avatar() external view returns (address);
-    function defaultRoles(address) external view returns (uint16);
+    function defaultRoles(address) external view returns (bytes32);
     function disableModule(address prevModule, address module) external;
     function enableModule(address module) external;
     function execTransactionFromModule(address to, uint256 value, bytes memory data, uint8 operation)
@@ -23,13 +61,13 @@ interface IRoles {
         returns (bool success);
     function execTransactionFromModuleReturnData(address to, uint256 value, bytes memory data, uint8 operation)
         external
-        returns (bool, bytes memory);
+        returns (bool success, bytes memory returnData);
     function execTransactionWithRole(
         address to,
         uint256 value,
         bytes memory data,
         uint8 operation,
-        uint16 role,
+        bytes32 roleKey,
         bool shouldRevert
     ) external returns (bool success);
     function execTransactionWithRoleReturnData(
@@ -37,7 +75,7 @@ interface IRoles {
         uint256 value,
         bytes memory data,
         uint8 operation,
-        uint16 role,
+        bytes32 roleKey,
         bool shouldRevert
     ) external returns (bool success, bytes memory returnData);
     function getGuard() external view returns (address _guard);
@@ -47,52 +85,33 @@ interface IRoles {
         returns (address[] memory array, address next);
     function guard() external view returns (address);
     function isModuleEnabled(address _module) external view returns (bool);
-    function multisend() external view returns (address);
     function owner() external view returns (address);
     function renounceOwnership() external;
-    function revokeTarget(uint16 role, address targetAddress) external;
-    function scopeAllowFunction(uint16 role, address targetAddress, bytes4 functionSig, uint8 options) external;
+    function revokeFunction(bytes32 roleKey, address targetAddress, bytes4 selector) external;
+    function revokeTarget(bytes32 roleKey, address targetAddress) external;
     function scopeFunction(
-        uint16 role,
+        bytes32 roleKey,
         address targetAddress,
-        bytes4 functionSig,
-        bool[] memory isParamScoped,
-        uint8[] memory paramType,
-        uint8[] memory paramComp,
-        bytes[] memory compValue,
+        bytes4 selector,
+        ConditionFlat[] memory conditions,
         uint8 options
     ) external;
-    function scopeFunctionExecutionOptions(uint16 role, address targetAddress, bytes4 functionSig, uint8 options)
-        external;
-    function scopeParameter(
-        uint16 role,
-        address targetAddress,
-        bytes4 functionSig,
-        uint256 paramIndex,
-        uint8 paramType,
-        uint8 paramComp,
-        bytes memory compValue
+    function scopeTarget(bytes32 roleKey, address targetAddress) external;
+    function setAllowance(
+        bytes32 key,
+        uint128 balance,
+        uint128 maxBalance,
+        uint128 refillAmount,
+        uint64 refillInterval,
+        uint64 refillTimestamp
     ) external;
-    function scopeParameterAsOneOf(
-        uint16 role,
-        address targetAddress,
-        bytes4 functionSig,
-        uint256 paramIndex,
-        uint8 paramType,
-        bytes[] memory compValues
-    ) external;
-    function scopeRevokeFunction(uint16 role, address targetAddress, bytes4 functionSig) external;
-    function scopeTarget(uint16 role, address targetAddress) external;
     function setAvatar(address _avatar) external;
-    function setDefaultRole(address module, uint16 role) external;
+    function setDefaultRole(address module, bytes32 roleKey) external;
     function setGuard(address _guard) external;
-    function setMultisend(address _multisend) external;
     function setTarget(address _target) external;
+    function setTransactionUnwrapper(address to, bytes4 selector, address adapter) external;
     function setUp(bytes memory initParams) external;
     function target() external view returns (address);
     function transferOwnership(address newOwner) external;
-    function unscopeParameter(uint16 role, address targetAddress, bytes4 functionSig, uint8 paramIndex) external;
-    function check(address to, uint256 value, bytes memory data, uint8 operation, uint16 role)
-        external
-        returns (bool success);
+    function unwrappers(bytes32) external view returns (address);
 }
