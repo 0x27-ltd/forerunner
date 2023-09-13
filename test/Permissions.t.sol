@@ -34,7 +34,7 @@ contract PermissionsTest is FundModuleBase {
         bytes memory data = abi.encodeWithSelector(mockUsdc.transfer.selector, guardian, amount);
         Enum.Operation operation = Enum.Operation.Call;
         // start execTransactionWithRole
-        bool success = fundModule.execWithPermission(to, 0, data, operation, 1, true);
+        bool success = fundModule.execWithPermission(to, 0, data, operation);
         // IRoles(fundModule.fundRoles()).check(to, 0, data, uint8(operation), 1);
         vm.stopPrank();
         // safe.exec(payable(to), 0, data);

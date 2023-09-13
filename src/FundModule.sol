@@ -10,6 +10,7 @@ import "./WhitelistManager.sol";
 import "./FundToken.sol";
 import "./compliance/IModularCompliance.sol";
 import "./IRoles.sol";
+import "zodiac-modifier-roles/Types.sol";
 
 contract FundModule is Module, FundToken, WhitelistManager {
     struct FundState {
@@ -35,6 +36,11 @@ contract FundModule is Module, FundToken, WhitelistManager {
 
     //map an investor's addy to their PendingTransaction
     mapping(address => PendingTransaction) private _transactionQueue;
+
+    mapping(address => bytes32) public managerPermissionTiers;
+
+    error ManagerNotPermissioned();
+    error RolesNotConnected();
 
     address public manager;
     address public accountant;
@@ -114,9 +120,13 @@ contract FundModule is Module, FundToken, WhitelistManager {
         transferOwnership(_fundSafe);
     }
 
+    bytes32 ROLE_KEY = 0x000000000000000000000000000000000000000000000000000000000000000f;
+    bytes32 ROLE_KEY1 = 0x0000000000000000000000000000000000000000000000000000000000000001;
+
     function setPolicyEngine(address _roles, address _guardian) public {
         //@todo add gate
         roles = IRoles(_roles);
+        _assignTier(ROLE_KEY, true);
         guardian = _guardian;
     }
 
@@ -136,6 +146,11 @@ contract FundModule is Module, FundToken, WhitelistManager {
 
     modifier onlyManager() {
         require(msg.sender == manager, "Only the manager can call this function.");
+        _;
+    }
+
+    modifier onlyGuardian() {
+        require(msg.sender == guardian, "Only the guardian can call this function.");
         _;
     }
 
@@ -302,19 +317,52 @@ contract FundModule is Module, FundToken, WhitelistManager {
     /**
      *  @dev check the permissions on the roles contract & execute on the safe.
      */
-    function execWithPermission(
-        address to,
-        uint256 value,
-        bytes calldata data,
-        Enum.Operation operation,
-        bytes32 role,
-        bool shouldRevert
-    ) public onlyManager returns (bool success) {
+    function execWithPermission(address to, uint256 value, bytes calldata data, Enum.Operation operation)
+        public
+        onlyManager
+        returns (bool success)
+    {
+        bytes32 managerRole = managerPermissionTiers[msg.sender];
+        if (managerRole == bytes32(0)) {
+            revert ManagerNotPermissioned();
+        }
+        //@todo evaluate compliance here
         if (address(roles) != address(0)) {
-            roles.execTransactionWithRole(to, value, data, uint8(operation), role, shouldRevert);
+            roles.execTransactionWithRole(to, value, data, uint8(operation), managerRole, true);
         } else {
             // off chain policy engine is being used
             exec(to, value, data, Enum.Operation.Call);
         }
     }
+
+    //this should be guardian/manager multisig
+    function modifyManager(address _manager, bytes32 roleKey) external onlyGuardian {
+        //@todo ensure the roleKey exists within the roles mapping
+        managerPermissionTiers[_manager] = roleKey;
+    }
+
+    //assign the fund module a role in the roles contract
+    function _assignTier(bytes32 roleKey, bool active) internal {
+        if (address(roles) == address(0)) {
+            revert RolesNotConnected();
+        }
+        bool[] memory memberOf = new bool[](1);
+        memberOf[0] = active;
+        bytes32[] memory keys = new bytes32[](1);
+        keys[0] = roleKey;
+        roles.assignRoles(address(this), keys, memberOf);
+    }
+
+    function assignTier(bytes32 roleKey, bool active) external onlyGuardian {
+        _assignTier(roleKey, active);
+    }
+
+    function allowTarget(bytes32 roleKey, address targetAddress, ExecutionOptions options) external onlyGuardian {
+        if (address(roles) == address(0)) {
+            revert RolesNotConnected();
+        }
+        roles.allowTarget(roleKey, targetAddress, uint8(options));
+    }
+
+    // function setDefaultRole(address module, bytes32 roleKey) external {}
 }

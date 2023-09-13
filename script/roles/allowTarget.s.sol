@@ -27,15 +27,15 @@ contract allowTarget is Script, Test {
         IRoles roles = IRoles(yourRolesDeployment);
 
         //assign new roles
-        uint16[] memory rolesAssigned = new uint16[](1); //dynamic array so its not storage
-        rolesAssigned[0] = 1;
+        bytes32[] memory rolesAssigned = new bytes32[](1); //dynamic array so its not storage
+        rolesAssigned[0] = 0x000000000000000000000000000000000000000000000000000000000000000f;
         bool[] memory memberOf = new bool[](1);
         memberOf[0] = true;
         roles.assignRoles(manager, rolesAssigned, memberOf);
 
         //Allow target
         address arbUSDC = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8;
-        roles.allowTarget(1, arbUSDC, 3);
+        roles.allowTarget(0x000000000000000000000000000000000000000000000000000000000000000f, arbUSDC, 3);
         vm.stopBroadcast();
 
         //Test manager's role works

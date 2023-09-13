@@ -31,9 +31,7 @@ contract LimitInvestorTest is FundModuleBase {
             address(mockUsdc),
             0,
             abi.encodeWithSelector(mockUsdc.transfer.selector, guardian, amount),
-            Enum.Operation.Call,
-            1,
-            true
+            Enum.Operation.Call
         );
         vm.stopPrank();
         assertEq(mockUsdc.balanceOf(guardian), amount);

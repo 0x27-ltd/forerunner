@@ -56,34 +56,38 @@ contract FundModuleBase is Test, WeiHelper {
             0.2 ether,
             90 days
             );
-        roles = _deployRoles();
+        roles = new Roles(address(fundModule), address(safe), address(safe)); //@todo replace owner as fundModule
+        vm.prank(guardian);
         fundModule.setPolicyEngine(address(roles), address(guardian));
         vm.label(address(roles), "roles");
         vm.label(address(fundModule), "fundModule");
         //enable module on Safe
         safe.enableModule(address(fundModule));
         safe.enableModule(address(roles));
+        vm.prank(guardian);
+        fundModule.modifyManager(manager, ROLE_KEY);
         //when StdInvariant is in use for stateful fuzz testing we need to define the target contract that will have its functions called
         // targetContract(address(fundModule));
         return (fundModule, safe);
     }
 
     function _deployRoles() internal returns (Roles deployed) {
-        deployed = new Roles(guardian, address(safe), address(safe)); //@todo replace owner as fundModule
-        uint16[] memory assignRoles = new uint16[](1);
-        assignRoles[0] = uint16(1);
-        bool[] memory memberOf = new bool[](1);
-        memberOf[0] = true;
-        vm.startPrank(guardian);
-        deployed.assignRoles(address(fundModule), assignRoles, memberOf);
-        deployed.setDefaultRole(address(fundModule), 1);
-        vm.stopPrank();
+        // deployed = new Roles(guardian, address(safe), address(safe)); //@todo replace owner as fundModule
+        // bytes32[] memory assignRoles = new bytes32[](1);
+        // assignRoles[0] = ROLE_KEY;
+        // bool[] memory memberOf = new bool[](1);
+        // memberOf[0] = true;
+        // vm.startPrank(guardian);
+        // deployed.assignRoles(address(fundModule), assignRoles, memberOf);
+        // fundModule.assignTier(ROLE_KEY, true);
+        // deployed.setDefaultRole(address(fundModule), ROLE_KEY);
+        // vm.stopPrank();
     }
 
     function easyAllowTargets(address target) public {
         //Although role whitelisting can be much more granular, doing contract wide allows is a nice simplification for initial testing
         vm.prank(guardian);
-        roles.allowTarget(1, target, ExecutionOptions(3));
+        fundModule.allowTarget(ROLE_KEY, target, ExecutionOptions(3));
     }
 
     function getMockUsdc(address _investor, uint256 _amount) public {
